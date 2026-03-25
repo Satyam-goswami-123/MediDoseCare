@@ -6,9 +6,9 @@ export default function Onboarding2Page() {
     <div className="page-enter" style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', padding: 24, background: 'var(--bg-primary)' }}>
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 32 }}>
         <img
-          src="https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&q=80&w=800"
+          src="/assets/health_monitor.png"
           alt="Health Tracking"
-          style={{ width: '100%', height: 280, borderRadius: 'var(--radius-lg)', objectFit: 'cover', boxShadow: 'var(--shadow-card)' }}
+          style={{ width: '100%', height: 320, borderRadius: 'var(--radius-lg)', objectFit: 'cover', boxShadow: 'var(--shadow-card)' }}
         />
         <div>
           <div className="badge badge-blue" style={{ marginBottom: 16 }}>Health Tracking</div>
