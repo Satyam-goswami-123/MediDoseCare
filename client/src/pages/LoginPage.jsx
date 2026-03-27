@@ -49,7 +49,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="page-enter" style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', padding: 24, background: 'var(--bg-primary)', justifyContent: 'center', gap: 32 }}>
+    <div className="page-enter" style={{ padding: 24, justifyContent: 'center', gap: 32 }}>
       <div style={{ textAlign: 'center' }}>
         <div style={{ fontSize: 56, marginBottom: 16 }}>💊</div>
         <h2>Welcome Back</h2>

@@ -1,6 +1,5 @@
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import BottomNav from '../components/BottomNav';
 
 const TYPE_ICONS = { reminder: '💊', alert: '⚠️', info: 'ℹ️', sos: '🆘' };
 const TYPE_COLORS = { reminder: 'var(--green)', alert: 'var(--red)', info: 'var(--blue)', sos: 'var(--red)' };
@@ -39,7 +38,6 @@ export default function NotificationsPage() {
           )}
         </div>
       </div>
-      <BottomNav />
     </div>
   );
 }

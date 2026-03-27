@@ -1,6 +1,5 @@
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import BottomNav from '../components/BottomNav';
 
 export default function MedicineListPage() {
   const navigate = useNavigate();
@@ -19,7 +18,7 @@ export default function MedicineListPage() {
 
         <div style={{ padding: '12px 20px 0' }}>
           {/* Stats Row */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 20 }}>
+          <div className="stats-grid" style={{ marginBottom: 20 }}>
             {[
               { label: 'Total', value: medicines.length, color: 'var(--blue)' },
               { label: 'Taken', value: taken, color: 'var(--green)' },
@@ -68,7 +67,6 @@ export default function MedicineListPage() {
           )}
         </div>
       </div>
-      <BottomNav />
     </div>
   );
 }

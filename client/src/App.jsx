@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AppProvider } from './context/AppContext';
 import './styles/index.css';
 
@@ -22,12 +22,16 @@ import ProfilePage from './pages/ProfilePage';
 import MedHistoryPage from './pages/MedHistoryPage';
 import AiCoachPage from './pages/AiCoachPage';
 import AchievementsPage from './pages/AchievementsPage';
+import BottomNav from './components/BottomNav';
 
-export default function App() {
+function AppShell() {
+  const { pathname } = useLocation();
+  const showNav = ['/home', '/medicines', '/health', '/prescriptions', '/profile', '/notifications'].some(p => pathname.startsWith(p));
+
   return (
-    <AppProvider>
-      <div className="app-frame">
-        <BrowserRouter>
+    <div className="app-frame">
+      <div className="app-content">
+        <div className="content-wrap">
           <Routes>
             <Route path="/" element={<SplashPage />} />
             <Route path="/onboarding/1" element={<Onboarding1Page />} />
@@ -51,8 +55,19 @@ export default function App() {
             <Route path="/achievements" element={<AchievementsPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
-        </BrowserRouter>
+        </div>
       </div>
+      {showNav && <BottomNav />}
+    </div>
+  );
+}
+
+export default function App() {
+  return (
+    <AppProvider>
+      <BrowserRouter>
+        <AppShell />
+      </BrowserRouter>
     </AppProvider>
   );
 }

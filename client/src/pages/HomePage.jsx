@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import BottomNav from '../components/BottomNav';
-import { Pill, Bell, AlertTriangle, Flame, Plus, BarChart2, ClipboardList, Bot, Users, Award, Activity, HeartPulse, Heart, Wind, Sun, Moon } from 'lucide-react';
+import { Pill, Bell, AlertTriangle, Plus, BarChart2, ClipboardList, Bot, Users, Award, Activity, HeartPulse, Heart, Wind, Sun, Moon } from 'lucide-react';
 
 function VitalCard({ icon, label, value, unit, color, onClick }) {
   return (
@@ -31,13 +30,22 @@ export default function HomePage() {
   const { user, medicines, healthLogs, streak, unreadCount, theme, toggleTheme } = useApp();
 
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [touchStart, setTouchStart] = useState(0);
 
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % VIBE_IMAGES.length);
-    }, 4000);
+    }, 5000);
     return () => clearInterval(timer);
-  }, []);
+  }, [currentSlide]);
+
+  const handleTouchStart = (e) => setTouchStart(e.targetTouches[0].clientX);
+  const handleTouchEnd = (e) => {
+    const touchEnd = e.changedTouches[0].clientX;
+    if (touchStart - touchEnd > 50) setCurrentSlide((prev) => (prev + 1) % VIBE_IMAGES.length);
+    if (touchStart - touchEnd < -50) setCurrentSlide((prev) => (prev === 0 ? VIBE_IMAGES.length - 1 : prev - 1));
+  };
+
   const latest = healthLogs[0] || {};
   const todayMeds = medicines.slice(0, 4);
   const taken = medicines.filter((m) => m.status === 'taken').length;
@@ -74,7 +82,7 @@ export default function HomePage() {
             </div>
           </div>
           {/* Positive Vibes Auto Slider */}
-          <div style={{ marginTop: 16, marginBottom: 0, position: 'relative', width: '100%', height: 180, borderRadius: 'var(--radius-lg)', overflow: 'hidden', boxShadow: 'var(--shadow-card)' }}>
+          <div className="vibe-slider" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} style={{ cursor: 'grab' }}>
             {VIBE_IMAGES.map((src, i) => (
               <img
                 key={i}
@@ -82,7 +90,7 @@ export default function HomePage() {
                 alt="Positive Vibe"
                 style={{
                   position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover',
-                  opacity: i === currentSlide ? 1 : 0, transition: 'opacity 1s ease-in-out'
+                  opacity: i === currentSlide ? 1 : 0, transition: 'opacity 0.8s ease-in-out'
                 }}
               />
             ))}
@@ -98,7 +106,7 @@ export default function HomePage() {
           {/* Quick Actions */}
           <div>
             <div className="section-label">Quick Actions</div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+            <div className="actions-grid">
               {[
                 { icon: <Plus size={24} />, label: 'Add Med', path: '/medicines/add', color: 'var(--green)' },
                 { icon: <BarChart2 size={24} />, label: 'Reports', path: '/history', color: 'var(--blue)' },
@@ -165,7 +173,6 @@ export default function HomePage() {
           </div>
         </div>
       </div>
-      <BottomNav />
     </div>
   );
 }

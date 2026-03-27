@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import BottomNav from '../components/BottomNav';
 
 export default function ProfilePage() {
   const navigate = useNavigate();
@@ -74,7 +73,6 @@ export default function ProfilePage() {
           <button className="btn" style={{ width: '100%', background: 'var(--red-dim)', color: 'var(--red)', border: '1px solid rgba(239,68,68,0.3)' }} onClick={() => { logout(); navigate('/login'); }}>🚪 Sign Out</button>
         </div>
       </div>
-      <BottomNav />
     </div>
   );
 }
