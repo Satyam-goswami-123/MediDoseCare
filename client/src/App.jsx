@@ -1,9 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AppProvider } from './context/AppContext';
-<<<<<<< HEAD
-=======
-import BottomNav from './components/BottomNav';
->>>>>>> 3e7d6325a401b89e1cf340e3f93175762db53863
+
 import './styles/index.css';
 
 import SplashPage from './pages/SplashPage';
@@ -26,8 +23,8 @@ import ProfilePage from './pages/ProfilePage';
 import MedHistoryPage from './pages/MedHistoryPage';
 import AiCoachPage from './pages/AiCoachPage';
 import AchievementsPage from './pages/AchievementsPage';
-<<<<<<< HEAD
 import BottomNav from './components/BottomNav';
+import GlobalHeader from './components/GlobalHeader';
 
 function AppShell() {
   const { pathname } = useLocation();
@@ -35,6 +32,7 @@ function AppShell() {
 
   return (
     <div className="app-frame">
+      {showNav && <GlobalHeader />}
       <div className="app-content">
         <div className="content-wrap">
           <Routes>
@@ -62,42 +60,6 @@ function AppShell() {
           </Routes>
         </div>
       </div>
-=======
-
-// Pages that should NOT show the bottom nav
-const NO_NAV_PATHS = ['/', '/onboarding/1', '/onboarding/2', '/onboarding/3', '/login'];
-
-function AppShell() {
-  const { pathname } = useLocation();
-  const showNav = !NO_NAV_PATHS.includes(pathname);
-
-  return (
-    <div className="app-frame">
-      <Routes>
-        <Route path="/" element={<SplashPage />} />
-        <Route path="/onboarding/1" element={<Onboarding1Page />} />
-        <Route path="/onboarding/2" element={<Onboarding2Page />} />
-        <Route path="/onboarding/3" element={<Onboarding3Page />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/home" element={<HomePage />} />
-        <Route path="/medicines" element={<MedicineListPage />} />
-        <Route path="/medicines/add" element={<AddMedicinePage />} />
-        <Route path="/medicines/:id" element={<ReminderDetailPage />} />
-        <Route path="/health" element={<HealthDashboardPage />} />
-        <Route path="/health/:type" element={<VitalsDetailPage />} />
-        <Route path="/prescriptions" element={<PrescriptionsPage />} />
-        <Route path="/prescriptions/:id" element={<ViewPrescriptionPage />} />
-        <Route path="/sos" element={<SosPage />} />
-        <Route path="/care-network" element={<CareNetworkPage />} />
-        <Route path="/notifications" element={<NotificationsPage />} />
-        <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/history" element={<MedHistoryPage />} />
-        <Route path="/ai-coach" element={<AiCoachPage />} />
-        <Route path="/achievements" element={<AchievementsPage />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-      {/* BottomNav lives here — outside all page animations — so position:fixed always works */}
->>>>>>> 3e7d6325a401b89e1cf340e3f93175762db53863
       {showNav && <BottomNav />}
     </div>
   );

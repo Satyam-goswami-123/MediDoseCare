@@ -17,10 +17,6 @@ export default function BottomNav() {
 
   return (
     <nav className="bottom-nav">
-      <div className="nav-brand">
-        <div className="nav-logo"><Pill size={20} color="white" /></div>
-        <span className="nav-title">MediDoseCare</span>
-      </div>
       <div className="nav-links-container">
         {NAV.map(({ path, icon, label }) => {
           const isActive = pathname.startsWith(path);

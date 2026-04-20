@@ -1,12 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-<<<<<<< HEAD
 import { Pill, Bell, AlertTriangle, Plus, BarChart2, ClipboardList, Bot, Users, Award, Activity, HeartPulse, Heart, Wind, Sun, Moon } from 'lucide-react';
-=======
-
-import { Pill, Bell, AlertTriangle, Flame, Plus, BarChart2, ClipboardList, Bot, Users, Award, Activity, HeartPulse, Heart, Wind, Sun, Moon } from 'lucide-react';
->>>>>>> 3e7d6325a401b89e1cf340e3f93175762db53863
 
 function VitalCard({ icon, label, value, unit, color, onClick }) {
   return (
@@ -35,15 +30,11 @@ export default function HomePage() {
   const { user, medicines, healthLogs, streak, unreadCount, theme, toggleTheme } = useApp();
 
   const [currentSlide, setCurrentSlide] = useState(0);
-<<<<<<< HEAD
   const [touchStart, setTouchStart] = useState(0);
-=======
->>>>>>> 3e7d6325a401b89e1cf340e3f93175762db53863
 
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % VIBE_IMAGES.length);
-<<<<<<< HEAD
     }, 5000);
     return () => clearInterval(timer);
   }, [currentSlide]);
@@ -55,11 +46,6 @@ export default function HomePage() {
     if (touchStart - touchEnd < -50) setCurrentSlide((prev) => (prev === 0 ? VIBE_IMAGES.length - 1 : prev - 1));
   };
 
-=======
-    }, 4000);
-    return () => clearInterval(timer);
-  }, []);
->>>>>>> 3e7d6325a401b89e1cf340e3f93175762db53863
   const latest = healthLogs[0] || {};
   const todayMeds = medicines.slice(0, 4);
   const taken = medicines.filter((m) => m.status === 'taken').length;
@@ -68,43 +54,15 @@ export default function HomePage() {
     <div className="page-enter">
       <div className="page-content">
         {/* Header */}
-<<<<<<< HEAD
         <div style={{ padding: '20px 20px 0', background: 'linear-gradient(180deg,rgba(59,130,246,0.08) 0%,transparent 100%)' }}>
-=======
-        <div style={{ padding: '20px 20px 0', background: 'linear-gradient(180deg,rgba(59,130,246,0.06) 0%,transparent 100%)' }}>
->>>>>>> 3e7d6325a401b89e1cf340e3f93175762db53863
           <div className="flex justify-between items-center">
             <div>
-              <div className="mobile-brand" style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 22, height: 22, background: 'linear-gradient(135deg, var(--blue), var(--green))', borderRadius: '50%' }}>
-                  <Pill size={12} color="white" />
-                </div>
-                <span style={{ fontSize: 20, fontWeight: 800, background: 'linear-gradient(135deg, var(--blue-light), var(--green-light))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                  MediDoseCare
-                </span>
-              </div>
               <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>Good Morning,</p>
               <h2 style={{ marginTop: 2 }}>{user?.name?.split(' ')[0] || 'User'}</h2>
             </div>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button className="back-btn" onClick={toggleTheme}>
-                {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-              </button>
-              <button className="back-btn" onClick={() => navigate('/notifications')} style={{ position: 'relative' }}>
-                <Bell size={18} />
-                {unreadCount > 0 && <span style={{ position: 'absolute', top: -4, right: -4, background: 'var(--red)', color: '#fff', borderRadius: '50%', width: 16, height: 16, fontSize: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>{unreadCount}</span>}
-              </button>
-              <button className="back-btn" onClick={() => navigate('/sos')} style={{ background: 'var(--red-dim)', borderColor: 'rgba(239,68,68,0.3)' }}>
-                <AlertTriangle size={18} color="var(--red)" />
-              </button>
-            </div>
           </div>
           {/* Positive Vibes Auto Slider */}
-<<<<<<< HEAD
           <div className="vibe-slider" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} style={{ cursor: 'grab' }}>
-=======
-          <div style={{ marginTop: 16, marginBottom: 0, position: 'relative', width: '100%', height: 180, borderRadius: 'var(--radius-lg)', overflow: 'hidden', boxShadow: 'var(--shadow-card)' }}>
->>>>>>> 3e7d6325a401b89e1cf340e3f93175762db53863
             {VIBE_IMAGES.map((src, i) => (
               <img
                 key={i}
@@ -112,11 +70,7 @@ export default function HomePage() {
                 alt="Positive Vibe"
                 style={{
                   position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover',
-<<<<<<< HEAD
                   opacity: i === currentSlide ? 1 : 0, transition: 'opacity 0.8s ease-in-out'
-=======
-                  opacity: i === currentSlide ? 1 : 0, transition: 'opacity 1s ease-in-out'
->>>>>>> 3e7d6325a401b89e1cf340e3f93175762db53863
                 }}
               />
             ))}
@@ -132,11 +86,7 @@ export default function HomePage() {
           {/* Quick Actions */}
           <div>
             <div className="section-label">Quick Actions</div>
-<<<<<<< HEAD
             <div className="actions-grid">
-=======
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
->>>>>>> 3e7d6325a401b89e1cf340e3f93175762db53863
               {[
                 { icon: <Plus size={24} />, label: 'Add Med', path: '/medicines/add', color: 'var(--green)' },
                 { icon: <BarChart2 size={24} />, label: 'Reports', path: '/history', color: 'var(--blue)' },
@@ -146,17 +96,9 @@ export default function HomePage() {
                 { icon: <Award size={24} />, label: 'Achievements', path: '/achievements', color: 'var(--gold)' },
               ].map(({ icon, label, path, color }) => (
                 <button key={path} onClick={() => navigate(path)} style={{
-<<<<<<< HEAD
                   background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)',
                   padding: '14px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
                   cursor: 'pointer', transition: 'var(--transition)', color
-=======
-                  background: 'var(--bg-glass)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
-                  border: '1px solid var(--border-glass)', borderRadius: 'var(--radius-md)',
-                  padding: '16px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10,
-                  cursor: 'pointer', transition: 'var(--transition)', color,
-                  boxShadow: 'var(--shadow-glass)'
->>>>>>> 3e7d6325a401b89e1cf340e3f93175762db53863
                 }}>
                   <span style={{ fontSize: 24 }}>{icon}</span>
                   <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)', textAlign: 'center', lineHeight: 1.2 }}>{label}</span>
@@ -171,11 +113,7 @@ export default function HomePage() {
               <div className="section-label" style={{ marginBottom: 0 }}>Today's Medicines</div>
               <button style={{ fontSize: 13, color: 'var(--blue)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }} onClick={() => navigate('/medicines')}>View All</button>
             </div>
-<<<<<<< HEAD
             <div className="card" style={{ padding: 0, overflow: 'hidden', background: 'linear-gradient(135deg,rgba(34,197,94,0.06),var(--bg-card))' }}>
-=======
-            <div className="card" style={{ padding: 0, overflow: 'hidden', background: 'linear-gradient(135deg,rgba(34,197,94,0.08),var(--bg-glass))' }}>
->>>>>>> 3e7d6325a401b89e1cf340e3f93175762db53863
               <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{taken}/{medicines.length} taken today</span>
                 <div style={{ background: 'var(--green-dim)', height: 8, borderRadius: 99, width: 100, overflow: 'hidden' }}>
@@ -215,10 +153,7 @@ export default function HomePage() {
           </div>
         </div>
       </div>
-<<<<<<< HEAD
-=======
 
->>>>>>> 3e7d6325a401b89e1cf340e3f93175762db53863
     </div>
   );
 }

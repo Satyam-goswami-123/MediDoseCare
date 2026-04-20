@@ -1,10 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 
-<<<<<<< HEAD
-=======
 
->>>>>>> 3e7d6325a401b89e1cf340e3f93175762db53863
 export default function MedicineListPage() {
   const navigate = useNavigate();
   const { medicines } = useApp();
@@ -22,11 +19,7 @@ export default function MedicineListPage() {
 
         <div style={{ padding: '12px 20px 0' }}>
           {/* Stats Row */}
-<<<<<<< HEAD
           <div className="stats-grid" style={{ marginBottom: 20 }}>
-=======
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 20 }}>
->>>>>>> 3e7d6325a401b89e1cf340e3f93175762db53863
             {[
               { label: 'Total', value: medicines.length, color: 'var(--blue)' },
               { label: 'Taken', value: taken, color: 'var(--green)' },
@@ -75,10 +68,6 @@ export default function MedicineListPage() {
           )}
         </div>
       </div>
-<<<<<<< HEAD
-=======
-
->>>>>>> 3e7d6325a401b89e1cf340e3f93175762db53863
     </div>
   );
 }

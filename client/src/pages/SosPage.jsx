@@ -21,11 +21,7 @@ export default function SosPage() {
   const handleCancel = () => { setTriggered(false); setCountdown(5); setSending(false); setSent(false); };
 
   return (
-<<<<<<< HEAD
     <div className="page-enter" style={{ background: sent ? 'linear-gradient(135deg,#14532d,#0f3320)' : 'linear-gradient(135deg,#7f1d1d 0%,#0d0f14 60%)' }}>
-=======
-    <div className="page-enter" style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', background: sent ? 'linear-gradient(135deg,#14532d,#0f3320)' : 'linear-gradient(135deg,#7f1d1d 0%,#0d0f14 60%)' }}>
->>>>>>> 3e7d6325a401b89e1cf340e3f93175762db53863
       <div className="page-header" style={{ background: 'transparent' }}>
         <button className="back-btn" onClick={() => navigate('/home')}>←</button>
         <h2>Emergency SOS</h2>

@@ -1,10 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 
-<<<<<<< HEAD
-=======
 
->>>>>>> 3e7d6325a401b89e1cf340e3f93175762db53863
 const TYPE_ICONS = { reminder: '💊', alert: '⚠️', info: 'ℹ️', sos: '🆘' };
 const TYPE_COLORS = { reminder: 'var(--green)', alert: 'var(--red)', info: 'var(--blue)', sos: 'var(--red)' };
 
@@ -42,10 +39,6 @@ export default function NotificationsPage() {
           )}
         </div>
       </div>
-<<<<<<< HEAD
-=======
-
->>>>>>> 3e7d6325a401b89e1cf340e3f93175762db53863
     </div>
   );
 }

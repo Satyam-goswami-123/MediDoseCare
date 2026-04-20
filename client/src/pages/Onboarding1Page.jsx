@@ -3,11 +3,7 @@ import { useNavigate } from 'react-router-dom';
 export default function Onboarding1Page() {
   const navigate = useNavigate();
   return (
-<<<<<<< HEAD
     <div className="page-enter" style={{ padding: 24 }}>
-=======
-    <div className="page-enter" style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', padding: 24, background: 'var(--bg-primary)' }}>
->>>>>>> 3e7d6325a401b89e1cf340e3f93175762db53863
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 32 }}>
         <img
           src="/assets/medication_reminder.png"

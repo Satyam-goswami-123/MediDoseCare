@@ -11,11 +11,7 @@ export default function SplashPage() {
   }, [navigate]);
 
   return (
-<<<<<<< HEAD
     <div className="splash-bg page-enter">
-=======
-    <div className="splash-bg page-enter" style={{ minHeight: '100dvh', flex: 1 }}>
->>>>>>> 3e7d6325a401b89e1cf340e3f93175762db53863
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20 }}>
         <div className="logo-ring"><Pill size={48} color="white" /></div>
         <div style={{ textAlign: 'center' }}>
