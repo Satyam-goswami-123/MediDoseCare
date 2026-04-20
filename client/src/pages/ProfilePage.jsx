@@ -37,9 +37,11 @@ export default function ProfilePage() {
         <div style={{ padding: '8px 20px 20px' }}>
           {/* Avatar */}
           <div style={{ textAlign: 'center', marginBottom: 24, padding: '20px 0', background: 'linear-gradient(180deg,rgba(59,130,246,0.08) 0%,transparent 100%)', borderRadius: 'var(--radius-lg)' }}>
-            <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'linear-gradient(135deg,var(--blue),var(--purple))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 36, margin: '0 auto 12px' }}>👤</div>
-            <h3>{user?.name}</h3>
-            <p style={{ fontSize: 13, marginTop: 4 }}>📱 +91 {user?.phone}</p>
+            <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'linear-gradient(135deg,var(--blue),var(--purple))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 36, margin: '0 auto 12px', overflow: 'hidden' }}>
+              {user?.photo ? <img src={user.photo} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : '👤'}
+            </div>
+            <h3>{user?.name || 'User'}</h3>
+            <p style={{ fontSize: 13, marginTop: 4, color: 'var(--text-secondary)' }}>{user?.email || user?.phone || 'No contact linked'}</p>
             <span className="badge badge-blue" style={{ marginTop: 8 }}>{user?.role || 'Patient'}</span>
           </div>
 

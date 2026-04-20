@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { AppProvider } from './context/AppContext';
+import { AppProvider, useApp } from './context/AppContext';
 
 import './styles/index.css';
 
@@ -28,7 +28,18 @@ import GlobalHeader from './components/GlobalHeader';
 
 function AppShell() {
   const { pathname } = useLocation();
+  const { loading, user } = useApp();
   const showNav = ['/home', '/medicines', '/health', '/prescriptions', '/profile', '/notifications'].some(p => pathname.startsWith(p));
+
+  if (loading) {
+    return (
+      <div className="splash-bg">
+        <div className="splash-loader">
+          <div className="splash-loader-bar" style={{ animationDuration: '1s' }} />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="app-frame">

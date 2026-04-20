@@ -1,4 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
+import { auth } from '../firebase';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { Pill, Flame, Trophy, AlertTriangle, ClipboardList, Zap } from 'lucide-react';
 
 const AppContext = createContext(null);
@@ -26,7 +28,8 @@ const DEMO_NOTIFICATIONS = [
 const DEMO_USER = { id: 1, name: 'Ramesh Kumar', phone: '9876543210', age: 72, blood_group: 'B+', emergency_contact: '9876543211', role: 'patient' };
 
 export function AppProvider({ children }) {
-  const [user, setUser] = useState(DEMO_USER);
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [token, setToken] = useState(localStorage.getItem('mdc_token'));
   const [medicines, setMedicines] = useState(DEMO_MEDICINES);
   const [healthLogs, setHealthLogs] = useState(DEMO_HEALTH);
@@ -52,16 +55,46 @@ export function AppProvider({ children }) {
     }
   }, [theme]);
 
+  // Firebase Auth Listener
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        const idToken = await firebaseUser.getIdToken();
+        setUser({
+          id: firebaseUser.uid,
+          name: firebaseUser.displayName || 'User',
+          email: firebaseUser.email,
+          phone: firebaseUser.phoneNumber,
+          photo: firebaseUser.photoURL,
+          role: 'patient'
+        });
+        setToken(idToken);
+        localStorage.setItem('mdc_token', idToken);
+      } else {
+        setUser(null);
+        setToken(null);
+        localStorage.removeItem('mdc_token');
+      }
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
   const login = (userData, userToken) => {
+    // This is now primarily handled by onAuthStateChanged
     setUser(userData);
     setToken(userToken);
     localStorage.setItem('mdc_token', userToken);
   };
 
-  const logout = () => {
-    setUser(null);
-    setToken(null);
-    localStorage.removeItem('mdc_token');
+  const logout = async () => {
+    try {
+      await signOut(auth);
+      // logout logic is handled by onAuthStateChanged
+    } catch (err) {
+      console.error("Logout failed", err);
+    }
   };
 
   const addMedicine = (med) => {
@@ -91,7 +124,7 @@ export function AppProvider({ children }) {
 
   return (
     <AppContext.Provider value={{
-      user, token, medicines, healthLogs, prescriptions, notifications, streak, achievements, theme,
+      user, loading, token, medicines, healthLogs, prescriptions, notifications, streak, achievements, theme,
       login, logout, addMedicine, markDose, addHealthLog, addPrescription, markNotificationRead, unreadCount, toggleTheme: () => {
         const newTheme = theme === 'dark' ? 'light' : 'dark';
         setTheme(newTheme);
