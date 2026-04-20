@@ -2,6 +2,10 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 3e7d6325a401b89e1cf340e3f93175762db53863
 export default function ProfilePage() {
   const navigate = useNavigate();
   const { user, setUser, logout } = useApp();
@@ -73,6 +77,10 @@ export default function ProfilePage() {
           <button className="btn" style={{ width: '100%', background: 'var(--red-dim)', color: 'var(--red)', border: '1px solid rgba(239,68,68,0.3)' }} onClick={() => { logout(); navigate('/login'); }}>🚪 Sign Out</button>
         </div>
       </div>
+<<<<<<< HEAD
+=======
+
+>>>>>>> 3e7d6325a401b89e1cf340e3f93175762db53863
     </div>
   );
 }
