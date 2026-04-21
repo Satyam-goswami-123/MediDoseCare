@@ -1,6 +1,7 @@
 const PHRASE_TRANSLATIONS = {
   'Settings': 'सेटिंग्स',
-  'Notification Special': 'सूचना विकल्प',
+  'Notification Special': 'सूचना सेटिंग्स',
+  'Notification Settings': 'सूचना सेटिंग्स',
   'Appearance': 'रूप',
   'System': 'सिस्टम',
   'Display Language': 'दिखाने की भाषा',
@@ -88,6 +89,7 @@ const WORD_TRANSLATIONS = {
 
 const nodeOriginalText = new WeakMap();
 let observer = null;
+let animationFrameId = null;
 
 function translateWordByWord(text) {
   return text.replace(/\b([A-Za-z]+)\b/g, (word) => {
@@ -105,6 +107,7 @@ function translateText(text, language) {
     return PHRASE_TRANSLATIONS[text];
   }
 
+  // Fallback to term-level translation for dynamic strings that are not explicitly mapped.
   return translateWordByWord(text);
 }
 
@@ -120,9 +123,16 @@ function translateAttributes(element, language) {
   });
 }
 
-function translateTree(language) {
-  if (typeof document === 'undefined') return;
-  const root = document.body;
+function translateTextNode(textNode, language) {
+  if (!textNode?.nodeValue?.trim()) return;
+  if (!nodeOriginalText.has(textNode)) {
+    nodeOriginalText.set(textNode, textNode.nodeValue);
+  }
+  const original = nodeOriginalText.get(textNode) || '';
+  textNode.nodeValue = translateText(original, language);
+}
+
+function translateSubtree(root, language) {
   if (!root) return;
 
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
@@ -136,12 +146,7 @@ function translateTree(language) {
   });
 
   while (walker.nextNode()) {
-    const textNode = walker.currentNode;
-    if (!nodeOriginalText.has(textNode)) {
-      nodeOriginalText.set(textNode, textNode.nodeValue);
-    }
-    const original = nodeOriginalText.get(textNode) || '';
-    textNode.nodeValue = translateText(original, language);
+    translateTextNode(walker.currentNode, language);
   }
 
   root.querySelectorAll('*').forEach((el) => translateAttributes(el, language));
@@ -153,11 +158,43 @@ export function applyLanguageToUI(language) {
     observer = null;
   }
 
-  translateTree(language);
-
   if (typeof document === 'undefined') return;
-  observer = new MutationObserver(() => translateTree(language));
-  observer.observe(document.body, {
+  const body = document.body;
+  if (!body) return;
+
+  translateSubtree(body, language);
+
+  observer = new MutationObserver((mutations) => {
+    if (animationFrameId) {
+      cancelAnimationFrame(animationFrameId);
+    }
+
+    animationFrameId = requestAnimationFrame(() => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'characterData') {
+          translateTextNode(mutation.target, language);
+          return;
+        }
+
+        if (mutation.type === 'attributes' && mutation.target instanceof Element) {
+          translateAttributes(mutation.target, language);
+          return;
+        }
+
+        mutation.addedNodes.forEach((node) => {
+          if (node.nodeType === Node.TEXT_NODE) {
+            translateTextNode(node, language);
+          } else if (node.nodeType === Node.ELEMENT_NODE) {
+            translateSubtree(node, language);
+            translateAttributes(node, language);
+          }
+        });
+      });
+      animationFrameId = null;
+    });
+  });
+
+  observer.observe(body, {
     childList: true,
     subtree: true,
     characterData: true,
@@ -165,4 +202,3 @@ export function applyLanguageToUI(language) {
     attributeFilter: ['placeholder', 'title', 'aria-label']
   });
 }
-

@@ -17,7 +17,7 @@ export default function SettingsPage() {
 
   const menuGroups = [
     {
-      title: 'Notification Special',
+      title: 'Notification Settings',
       items: [
         {
           id: 'vibration',
