@@ -34,7 +34,8 @@ export default function ProfilePage() {
       let profiles = {};
       try {
         profiles = JSON.parse(localStorage.getItem('mdc_user_profiles') || '{}');
-      } catch {
+      } catch (err) {
+        console.error('Failed to parse stored profile data', err);
         profiles = {};
       }
       profiles[user.id] = {
@@ -42,9 +43,6 @@ export default function ProfilePage() {
         name: normalizedForm.name,
         age: normalizedForm.age,
         blood_group: normalizedForm.blood_group,
-        emergency_contact: normalizedForm.emergency_contact,
-        email: user?.email || profiles[user.id]?.email || null,
-        phone: user?.phone || profiles[user.id]?.phone || null,
       };
       localStorage.setItem('mdc_user_profiles', JSON.stringify(profiles));
     }

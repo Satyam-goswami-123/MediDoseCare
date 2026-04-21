@@ -9,7 +9,6 @@ import {
   sendSignInLinkToEmail,
   isSignInWithEmailLink,
   signInWithEmailLink,
-  fetchSignInMethodsForEmail,
   signOut,
   signInWithPhoneNumber, 
   RecaptchaVerifier 
@@ -19,6 +18,7 @@ import { Mail, Phone, Chrome, ChevronLeft, Eye, EyeOff } from 'lucide-react';
 const DEFAULT_COUNTRY_CODE = '+91';
 const DEFAULT_PHONE_DIGITS = 10;
 const MIN_PASSWORD_LENGTH = 6;
+const LOGIN_PATH = '/login';
 
 const toFirebaseMessage = (err) => {
   const code = err?.code;
@@ -31,11 +31,10 @@ const toFirebaseMessage = (err) => {
   return err?.message || 'Something went wrong. Please try again.';
 };
 
-const saveSignupProfile = ({ uid, firstName, lastName, email, contactNumber }) => {
+const saveSignupProfile = ({ uid, firstName, lastName, email }) => {
   if (!uid) return;
   const fullName = `${firstName} ${lastName}`.trim();
   const normalizedEmail = (email || '').trim().toLowerCase();
-  const phone = `${DEFAULT_COUNTRY_CODE}${contactNumber}`;
 
   let profiles = {};
   try {
@@ -47,7 +46,6 @@ const saveSignupProfile = ({ uid, firstName, lastName, email, contactNumber }) =
   profiles[uid] = {
     name: fullName || 'User',
     email: normalizedEmail || null,
-    phone
   };
   localStorage.setItem('mdc_user_profiles', JSON.stringify(profiles));
 };
@@ -57,6 +55,7 @@ export default function LoginPage() {
   const [mode, setMode] = useState('choice'); // choice, email, phone, signup
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   
   // Form States
   const [email, setEmail] = useState('');
@@ -79,10 +78,15 @@ export default function LoginPage() {
       if (!isSignInWithEmailLink(auth, window.location.href)) return;
       setLoading(true);
       setError('');
+      setSuccess('');
       try {
         const storedEmail = localStorage.getItem('mdc_email_for_signin');
-        const emailForSignIn = storedEmail || window.prompt('Please confirm your email for sign-in');
-        if (!emailForSignIn) throw new Error('Email is required to complete OTP sign-in.');
+        if (!storedEmail) {
+          setMode('emailOtp');
+          setError('Please enter your email and request OTP again.');
+          return;
+        }
+        const emailForSignIn = storedEmail;
         await signInWithEmailLink(auth, emailForSignIn, window.location.href);
         localStorage.removeItem('mdc_email_for_signin');
         navigate('/home', { replace: true });
@@ -124,16 +128,17 @@ export default function LoginPage() {
 
     setLoading(true);
     setError('');
+    setSuccess('');
     try {
       if (isSignup) {
         const userCredential = await createUserWithEmailAndPassword(auth, normalizedEmail, normalizedPassword);
         await updateProfile(userCredential.user, { displayName: `${firstName} ${lastName}`.trim() });
         localStorage.setItem('mdc_signup_phone', `${DEFAULT_COUNTRY_CODE}${contactNumber}`);
-        saveSignupProfile({ uid: userCredential.user.uid, firstName, lastName, email: normalizedEmail, contactNumber });
+        saveSignupProfile({ uid: userCredential.user.uid, firstName, lastName, email: normalizedEmail });
         await signOut(auth);
         setMode('email');
         setPassword('');
-        setError('Registration successful. Please login with Email/Password or Email OTP.');
+        setSuccess('Registration successful. Please login with Email/Password or Email OTP.');
       } else {
         await signInWithEmailAndPassword(auth, normalizedEmail, normalizedPassword);
         navigate('/home');
@@ -150,16 +155,16 @@ export default function LoginPage() {
     if (!normalizedEmail) return setError('Please enter your email address');
     setLoading(true);
     setError('');
+    setSuccess('');
     try {
-      const methods = await fetchSignInMethodsForEmail(auth, normalizedEmail);
-      if (!methods.length) throw new Error('No account found with this email.');
       const actionCodeSettings = {
-        url: `${window.location.origin}/login`,
+        url: `${window.location.origin}${LOGIN_PATH}`,
         handleCodeInApp: true,
       };
       await sendSignInLinkToEmail(auth, normalizedEmail, actionCodeSettings);
       localStorage.setItem('mdc_email_for_signin', normalizedEmail);
       setOtpEmailSent(true);
+      setSuccess('If an account exists for this email, an OTP login link has been sent.');
     } catch (err) {
       setOtpEmailSent(false);
       setError(toFirebaseMessage(err));
@@ -232,6 +237,11 @@ export default function LoginPage() {
           {error}
         </div>
       )}
+      {success && (
+        <div className="card" style={{ marginBottom: 20, borderColor: 'var(--green)', background: 'rgba(34,197,94,0.12)', color: 'var(--green)', fontSize: 13, padding: 12 }}>
+          {success}
+        </div>
+      )}
 
       <div className="slide-up">
         {mode === 'choice' && (
@@ -257,7 +267,7 @@ export default function LoginPage() {
 
         {(mode === 'email' || mode === 'signup') && (
           <div>
-            <button className="btn-back" onClick={() => { setMode('choice'); setError(''); }} style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'none', border: 'none', color: 'var(--text-muted)', marginBottom: 24, cursor: 'pointer' }}>
+            <button className="btn-back" onClick={() => { setMode('choice'); setError(''); setSuccess(''); }} style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'none', border: 'none', color: 'var(--text-muted)', marginBottom: 24, cursor: 'pointer' }}>
               <ChevronLeft size={16} /> Back
             </button>
             <h3 style={{ marginBottom: 20 }}>{mode === 'signup' ? 'Create Account' : 'Welcome Back'}</h3>
@@ -301,7 +311,7 @@ export default function LoginPage() {
 
         {mode === 'emailOtp' && (
           <div>
-            <button className="btn-back" onClick={() => { setMode('choice'); setError(''); setOtpEmailSent(false); }} style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'none', border: 'none', color: 'var(--text-muted)', marginBottom: 24, cursor: 'pointer' }}>
+            <button className="btn-back" onClick={() => { setMode('choice'); setError(''); setSuccess(''); setOtpEmailSent(false); }} style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'none', border: 'none', color: 'var(--text-muted)', marginBottom: 24, cursor: 'pointer' }}>
               <ChevronLeft size={16} /> Back
             </button>
             <h3 style={{ marginBottom: 20 }}>Login with OTP</h3>
@@ -322,7 +332,7 @@ export default function LoginPage() {
 
         {mode === 'phone' && (
           <div>
-            <button className="btn-back" onClick={() => { setMode('choice'); setStep('input'); setError(''); }} style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'none', border: 'none', color: 'var(--text-muted)', marginBottom: 24, cursor: 'pointer' }}>
+            <button className="btn-back" onClick={() => { setMode('choice'); setStep('input'); setError(''); setSuccess(''); }} style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'none', border: 'none', color: 'var(--text-muted)', marginBottom: 24, cursor: 'pointer' }}>
               <ChevronLeft size={16} /> Back
             </button>
             <h3 style={{ marginBottom: 20 }}>Login with Phone</h3>

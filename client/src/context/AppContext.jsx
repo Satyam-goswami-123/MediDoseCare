@@ -83,9 +83,9 @@ export function AppProvider({ children }) {
         const phone = firebaseUser.phoneNumber || storedProfile.phone || fallbackPhone || null;
         const age = storedProfile.age ?? null;
         const blood_group = storedProfile.blood_group ?? null;
-        const emergency_contact = storedProfile.emergency_contact ?? null;
+        const emergency_contact = null;
 
-        upsertStoredProfile(firebaseUser.uid, { name, email, phone, age, blood_group, emergency_contact });
+        upsertStoredProfile(firebaseUser.uid, { name, email, age, blood_group });
 
         setUser({
           id: firebaseUser.uid,
