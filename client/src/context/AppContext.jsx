@@ -145,7 +145,6 @@ export function AppProvider({ children }) {
         setUser(null);
         setToken(null);
         localStorage.removeItem('mdc_token');
-        localStorage.removeItem('mdc_signup_phone');
       }
       localStorage.removeItem('mdc_signup_phone');
       // logout logic is handled by onAuthStateChanged

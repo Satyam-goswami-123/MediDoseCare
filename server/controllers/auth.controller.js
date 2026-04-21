@@ -6,13 +6,22 @@ const nodemailer = require('nodemailer');
 const otpStore = new Map(); // In-memory OTP store (use Redis in production)
 const OTP_EXPIRY_MS = 5 * 60 * 1000;
 const MAX_OTP_ATTEMPTS = 5;
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const normalizeEmail = (email = '') => email.trim().toLowerCase();
 const otpKey = (channel, target) => `${channel}:${target}`;
 const hashOtp = (channel, target, otp) =>
   crypto.createHash('sha256').update(`${channel}:${target}:${otp}`).digest('hex');
 const generateOtp = () => crypto.randomInt(100000, 1000000).toString();
+const isValidEmail = (email = '') => {
+  const normalized = normalizeEmail(email);
+  const parts = normalized.split('@');
+  if (parts.length !== 2) return false;
+  const [localPart, domainPart] = parts;
+  if (!localPart || !domainPart) return false;
+  if (!domainPart.includes('.')) return false;
+  if (localPart.length > 64 || domainPart.length > 253) return false;
+  return true;
+};
 
 let transporter;
 const getTransporter = () => {
@@ -106,7 +115,7 @@ const sendOtp = async (req, res) => {
 
   if (email) {
     const normalizedEmail = normalizeEmail(email);
-    if (!EMAIL_REGEX.test(normalizedEmail)) {
+    if (!isValidEmail(normalizedEmail)) {
       return res.status(400).json({ error: 'Valid email address required' });
     }
 
@@ -122,7 +131,7 @@ const sendOtp = async (req, res) => {
 
   if (!phone) return res.status(400).json({ error: 'Phone number required' });
 
-  const otp = Math.floor(1000 + Math.random() * 9000).toString();
+  const otp = crypto.randomInt(1000, 10000).toString();
   saveOtp('phone', phone, otp);
   console.log(`OTP for ${phone}: ${otp}`); // In production: send via SMS
 
@@ -138,7 +147,7 @@ const verifyOtp = async (req, res) => {
 
   if (email) {
     const normalizedEmail = normalizeEmail(email);
-    if (!EMAIL_REGEX.test(normalizedEmail)) {
+    if (!isValidEmail(normalizedEmail)) {
       return res.status(400).json({ error: 'Valid email address required' });
     }
 
@@ -153,7 +162,7 @@ const verifyOtp = async (req, res) => {
       { expiresIn: '30d' }
     );
 
-    const userName = (name || normalizedEmail.split('@')[0] || 'User').trim();
+    const userName = (normalizedEmail.split('@')[0] || 'User').trim();
     return res.json({
       token,
       user: {

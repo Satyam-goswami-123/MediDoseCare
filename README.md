@@ -26,7 +26,7 @@ source server/schema.sql
 
 ### 2. Server Setup
 ```bash
-cd /home/runner/work/MediDoseCare/MediDoseCare
+cd MediDoseCare
 # Install backend dependencies at repo root
 npm install
 node server/index.js   # Runs on http://localhost:5000
