@@ -23,13 +23,14 @@ import ProfilePage from './pages/ProfilePage';
 import MedHistoryPage from './pages/MedHistoryPage';
 import AiCoachPage from './pages/AiCoachPage';
 import AchievementsPage from './pages/AchievementsPage';
+import SettingsPage from './pages/SettingsPage';
 import BottomNav from './components/BottomNav';
 import GlobalHeader from './components/GlobalHeader';
 
 function AppShell() {
   const { pathname } = useLocation();
   const { loading, user } = useApp();
-  const showNav = ['/home', '/medicines', '/health', '/prescriptions', '/profile', '/notifications'].some(p => pathname.startsWith(p));
+  const showNav = ['/home', '/medicines', '/health', '/prescriptions', '/profile', '/notifications', '/settings'].some(p => pathname.startsWith(p));
 
   if (loading) {
     return (
@@ -67,6 +68,7 @@ function AppShell() {
             <Route path="/history" element={<MedHistoryPage />} />
             <Route path="/ai-coach" element={<AiCoachPage />} />
             <Route path="/achievements" element={<AchievementsPage />} />
+            <Route path="/settings" element={<SettingsPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </div>

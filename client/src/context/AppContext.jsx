@@ -46,6 +46,16 @@ export function AppProvider({ children }) {
   ]);
 
   const [theme, setTheme] = useState(localStorage.getItem('mdc_theme') || 'dark');
+  const [settings, setSettings] = useState(() => {
+    const saved = localStorage.getItem('mdc_settings');
+    return saved ? JSON.parse(saved) : {
+      vibration: true,
+      softNotifications: true,
+      soundEnabled: true,
+      reminderFrequency: 'standard',
+      autoSync: true
+    };
+  });
 
   useEffect(() => {
     if (theme === 'light') {
@@ -131,6 +141,44 @@ export function AppProvider({ children }) {
         localStorage.setItem('mdc_theme', newTheme);
       },
       setUser,
+      settings,
+      updateSettings: (newSettings) => {
+        const updated = { ...settings, ...newSettings };
+        setSettings(updated);
+        localStorage.setItem('mdc_settings', JSON.stringify(updated));
+      },
+      triggerReminder: (title, message) => {
+        // Soft Notification (using Browser Notification API if permitted)
+        if (settings.softNotifications && "Notification" in window) {
+          if (Notification.permission === "granted") {
+            new Notification(title, { body: message, icon: '/logo192.png' });
+          } else if (Notification.permission !== "denied") {
+            Notification.requestPermission();
+          }
+        }
+
+        // Vibration
+        if (settings.vibration && "vibrate" in navigator) {
+          window.navigator.vibrate([200, 100, 200]);
+        }
+
+        // Sound (Soft alert)
+        if (settings.soundEnabled) {
+          const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3');
+          audio.volume = 0.4;
+          audio.play().catch(e => console.log('Audio play failed', e));
+        }
+
+        // Add to notification list
+        setNotifications(prev => [{
+          id: Date.now(),
+          title,
+          message,
+          type: 'reminder',
+          is_read: 0,
+          created_at: new Date().toISOString()
+        }, ...prev]);
+      }
     }}>
       {children}
     </AppContext.Provider>

@@ -18,11 +18,8 @@ export default function ProfilePage() {
       { icon: '📞', label: 'Emergency Contact', value: user?.emergency_contact || '9876543211' },
       { icon: '💊', label: 'Active Role', value: user?.role || 'Patient' },
     ]},
-    { label: 'Quick Links', items: [
-      { icon: '📋', label: 'Prescriptions', action: () => navigate('/prescriptions') },
-      { icon: '📊', label: 'Health Reports', action: () => navigate('/history') },
-      { icon: '🏆', label: 'Achievements', action: () => navigate('/achievements') },
-      { icon: '👥', label: 'Care Network', action: () => navigate('/care-network') },
+    { label: 'Preferences', items: [
+      { icon: '⚙️', label: 'App Settings', action: () => navigate('/settings') },
     ]},
   ];
 
