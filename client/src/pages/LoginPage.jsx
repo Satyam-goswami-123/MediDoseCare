@@ -5,6 +5,7 @@ import {
   signInWithPopup, 
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, 
+  updateProfile,
   signInWithPhoneNumber, 
   RecaptchaVerifier 
 } from 'firebase/auth';
@@ -19,6 +20,9 @@ export default function LoginPage() {
   // Form States
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [contactNumber, setContactNumber] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState(['', '', '', '', '', '']); // Firebase uses 6 digits
@@ -43,12 +47,19 @@ export default function LoginPage() {
 
   // Email Login/Signup
   const handleEmailAction = async (isSignup) => {
-    if (!email || !password) return setError('Please fill all fields');
+    if (isSignup) {
+      if (!firstName || !lastName || !contactNumber || !email || !password) return setError('Please fill all fields');
+      if (contactNumber.length !== 10) return setError('Enter a valid 10-digit contact number');
+    } else if (!email || !password) {
+      return setError('Please fill all fields');
+    }
     setLoading(true);
     setError('');
     try {
       if (isSignup) {
-        await createUserWithEmailAndPassword(auth, email, password);
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        await updateProfile(userCredential.user, { displayName: `${firstName} ${lastName}`.trim() });
+        localStorage.setItem('mdc_signup_phone', `+91${contactNumber}`);
       } else {
         await signInWithEmailAndPassword(auth, email, password);
       }
@@ -150,8 +161,27 @@ export default function LoginPage() {
               <ChevronLeft size={16} /> Back
             </button>
             <h3 style={{ marginBottom: 20 }}>{mode === 'signup' ? 'Create Account' : 'Welcome Back'}</h3>
+            {mode === 'signup' && (
+              <>
+                <div className="input-group">
+                  <label className="input-label">First Name</label>
+                  <input className="input" type="text" placeholder="Enter first name" value={firstName} onChange={e => setFirstName(e.target.value)} />
+                </div>
+                <div className="input-group">
+                  <label className="input-label">Last Name</label>
+                  <input className="input" type="text" placeholder="Enter last name" value={lastName} onChange={e => setLastName(e.target.value)} />
+                </div>
+                <div className="input-group">
+                  <label className="input-label">Contact Number</label>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <div className="input" style={{ width: 60, textAlign: 'center', background: 'var(--bg-secondary)' }}>+91</div>
+                    <input className="input" type="tel" maxLength={10} placeholder="9876543210" value={contactNumber} onChange={e => setContactNumber(e.target.value.replace(/\D/g, ''))} />
+                  </div>
+                </div>
+              </>
+            )}
             <div className="input-group">
-              <label className="input-label">Email Address</label>
+              <label className="input-label">{mode === 'signup' ? 'Mail ID' : 'Email Address'}</label>
               <input className="input" type="email" placeholder="name@example.com" value={email} onChange={e => setEmail(e.target.value)} />
             </div>
             <div className="input-group">

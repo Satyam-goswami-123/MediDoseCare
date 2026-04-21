@@ -64,7 +64,7 @@ export function AppProvider({ children }) {
           id: firebaseUser.uid,
           name: firebaseUser.displayName || 'User',
           email: firebaseUser.email,
-          phone: firebaseUser.phoneNumber,
+          phone: firebaseUser.phoneNumber || localStorage.getItem('mdc_signup_phone'),
           photo: firebaseUser.photoURL,
           role: 'patient'
         });
