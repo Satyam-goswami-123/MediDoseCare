@@ -266,10 +266,10 @@ function translateText(text, language) {
     return text;
   }
 
-  const normalizedText = text.trim().replace(/\s+/g, ' ');
   if (PHRASE_TRANSLATIONS[text]) {
     return PHRASE_TRANSLATIONS[text];
   }
+  const normalizedText = text.trim().replace(/\s+/g, ' ');
   if (PHRASE_TRANSLATIONS[normalizedText]) {
     return PHRASE_TRANSLATIONS[normalizedText];
   }
