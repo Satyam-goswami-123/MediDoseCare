@@ -5,10 +5,14 @@ import {
   signInWithPopup, 
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, 
+  updateProfile,
   signInWithPhoneNumber, 
   RecaptchaVerifier 
 } from 'firebase/auth';
 import { Mail, Phone, Chrome, ChevronLeft, Eye, EyeOff } from 'lucide-react';
+
+const DEFAULT_COUNTRY_CODE = '+91';
+const DEFAULT_PHONE_DIGITS = 10;
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -19,6 +23,9 @@ export default function LoginPage() {
   // Form States
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [contactNumber, setContactNumber] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState(['', '', '', '', '', '']); // Firebase uses 6 digits
@@ -43,12 +50,19 @@ export default function LoginPage() {
 
   // Email Login/Signup
   const handleEmailAction = async (isSignup) => {
-    if (!email || !password) return setError('Please fill all fields');
+    if (isSignup) {
+      if (!firstName || !lastName || !contactNumber || !email || !password) return setError('Please fill all fields');
+      if (!new RegExp(`^\\d{${DEFAULT_PHONE_DIGITS}}$`).test(contactNumber)) return setError('Contact number must be exactly 10 digits');
+    } else if (!email || !password) {
+      return setError('Please fill all fields');
+    }
     setLoading(true);
     setError('');
     try {
       if (isSignup) {
-        await createUserWithEmailAndPassword(auth, email, password);
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        await updateProfile(userCredential.user, { displayName: `${firstName} ${lastName}`.trim() });
+        localStorage.setItem('mdc_signup_phone', `${DEFAULT_COUNTRY_CODE}${contactNumber}`);
       } else {
         await signInWithEmailAndPassword(auth, email, password);
       }
@@ -70,12 +84,12 @@ export default function LoginPage() {
   };
 
   const handlePhoneSubmit = async () => {
-    if (phone.length < 10) return setError('Invalid phone number');
+    if (phone.length < DEFAULT_PHONE_DIGITS) return setError('Invalid phone number');
     setLoading(true);
     setError('');
     try {
       setupRecaptcha();
-      const phoneNumber = `+91${phone}`; // Default to India, adjust as needed
+      const phoneNumber = `${DEFAULT_COUNTRY_CODE}${phone}`; // Default to India, adjust as needed
       const confirmation = await signInWithPhoneNumber(auth, phoneNumber, window.recaptchaVerifier);
       setConfirmationResult(confirmation);
       setStep('verify');
@@ -150,8 +164,27 @@ export default function LoginPage() {
               <ChevronLeft size={16} /> Back
             </button>
             <h3 style={{ marginBottom: 20 }}>{mode === 'signup' ? 'Create Account' : 'Welcome Back'}</h3>
+            {mode === 'signup' && (
+              <>
+                <div className="input-group">
+                  <label className="input-label">First Name</label>
+                  <input className="input" type="text" placeholder="Enter first name" value={firstName} onChange={e => setFirstName(e.target.value)} />
+                </div>
+                <div className="input-group">
+                  <label className="input-label">Last Name</label>
+                  <input className="input" type="text" placeholder="Enter last name" value={lastName} onChange={e => setLastName(e.target.value)} />
+                </div>
+                <div className="input-group">
+                  <label className="input-label">Contact Number</label>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <div className="input" style={{ width: 60, textAlign: 'center', background: 'var(--bg-secondary)' }}>{DEFAULT_COUNTRY_CODE}</div>
+                    <input className="input" type="tel" maxLength={DEFAULT_PHONE_DIGITS} placeholder="9876543210" value={contactNumber} onChange={e => setContactNumber(e.target.value.replace(/\D/g, ''))} />
+                  </div>
+                </div>
+              </>
+            )}
             <div className="input-group">
-              <label className="input-label">Email Address</label>
+              <label className="input-label">{mode === 'signup' ? 'Mail ID' : 'Email Address'}</label>
               <input className="input" type="email" placeholder="name@example.com" value={email} onChange={e => setEmail(e.target.value)} />
             </div>
             <div className="input-group">
@@ -181,8 +214,8 @@ export default function LoginPage() {
                 <div className="input-group">
                   <label className="input-label">Mobile Number</label>
                   <div style={{ display: 'flex', gap: 8 }}>
-                    <div className="input" style={{ width: 60, textAlign: 'center', background: 'var(--bg-secondary)' }}>+91</div>
-                    <input className="input" type="tel" maxLength={10} placeholder="9876543210" value={phone} onChange={e => setPhone(e.target.value.replace(/\D/g, ''))} />
+                    <div className="input" style={{ width: 60, textAlign: 'center', background: 'var(--bg-secondary)' }}>{DEFAULT_COUNTRY_CODE}</div>
+                    <input className="input" type="tel" maxLength={DEFAULT_PHONE_DIGITS} placeholder="9876543210" value={phone} onChange={e => setPhone(e.target.value.replace(/\D/g, ''))} />
                   </div>
                 </div>
                 <button className="btn btn-primary btn-full" style={{ marginTop: 8 }} onClick={handlePhoneSubmit} disabled={loading}>
@@ -191,7 +224,7 @@ export default function LoginPage() {
               </>
             ) : (
               <>
-                <p style={{ textAlign: 'center', color: 'var(--text-secondary)', marginBottom: 24 }}>Enter verification code sent to +91 {phone}</p>
+                <p style={{ textAlign: 'center', color: 'var(--text-secondary)', marginBottom: 24 }}>Enter verification code sent to {DEFAULT_COUNTRY_CODE} {phone}</p>
                 <div className="otp-row" style={{ marginBottom: 24, justifyContent: 'center' }}>
                   {otp.map((d, i) => (
                     <input key={i} ref={otpRefs[i]} className="otp-box" style={{ width: 44, height: 50, fontSize: 20 }} type="tel" maxLength={1} value={d}
