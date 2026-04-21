@@ -57,16 +57,38 @@ export function AppProvider({ children }) {
 
   // Firebase Auth Listener
   useEffect(() => {
+    const getStoredProfiles = () => {
+      try {
+        return JSON.parse(localStorage.getItem('mdc_user_profiles') || '{}');
+      } catch {
+        return {};
+      }
+    };
+
+    const upsertStoredProfile = (uid, profile) => {
+      if (!uid) return;
+      const profiles = getStoredProfiles();
+      profiles[uid] = { ...(profiles[uid] || {}), ...profile };
+      localStorage.setItem('mdc_user_profiles', JSON.stringify(profiles));
+    };
+
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         const idToken = await firebaseUser.getIdToken();
         const storedFallbackPhone = localStorage.getItem('mdc_signup_phone');
         const fallbackPhone = /^\+91\d{10}$/.test(storedFallbackPhone || '') ? storedFallbackPhone : null;
+        const storedProfile = getStoredProfiles()[firebaseUser.uid] || {};
+        const name = firebaseUser.displayName || storedProfile.name || 'User';
+        const email = firebaseUser.email || storedProfile.email || null;
+        const phone = firebaseUser.phoneNumber || fallbackPhone || storedProfile.phone || null;
+
+        upsertStoredProfile(firebaseUser.uid, { name, email, phone });
+
         setUser({
           id: firebaseUser.uid,
-          name: firebaseUser.displayName || 'User',
-          email: firebaseUser.email,
-          phone: firebaseUser.phoneNumber || fallbackPhone,
+          name,
+          email,
+          phone,
           photo: firebaseUser.photoURL,
           role: 'patient'
         });
