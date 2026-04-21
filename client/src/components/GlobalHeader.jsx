@@ -1,6 +1,6 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { Pill, Bell, AlertTriangle, Sun, Moon, Home, HeartPulse, FileText, User } from 'lucide-react';
+import { Pill, Bell, AlertTriangle, Sun, Moon, Home, HeartPulse, FileText, User, Globe } from 'lucide-react';
 
 const NAV = [
   { path: '/home', icon: <Home size={18} />, label: 'Home' },
@@ -13,7 +13,7 @@ const NAV = [
 export default function GlobalHeader() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const { theme, toggleTheme, unreadCount } = useApp();
+  const { theme, toggleTheme, unreadCount, language, setLanguage } = useApp();
 
   return (
     <header className="global-header">
@@ -48,6 +48,15 @@ export default function GlobalHeader() {
 
         {/* Actions */}
         <div className="header-actions">
+          <button
+            className="header-btn lang-toggle"
+            title={language === 'hi' ? 'Switch to English' : 'हिंदी में बदलें'}
+            onClick={() => setLanguage(language === 'hi' ? 'en' : 'hi')}
+            style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 13, fontWeight: 600, letterSpacing: '0.01em', padding: '4px 8px', borderRadius: 8 }}
+          >
+            <Globe size={15} />
+            <span>{language === 'hi' ? 'EN' : 'हि'}</span>
+          </button>
           <button className="header-btn" onClick={toggleTheme}>
             {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
           </button>
