@@ -60,20 +60,26 @@ export function AppProvider({ children }) {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         const idToken = await firebaseUser.getIdToken();
+        const storedFallbackPhone = localStorage.getItem('mdc_signup_phone');
+        const fallbackPhone = /^\+91\d{10}$/.test(storedFallbackPhone || '') ? storedFallbackPhone : null;
         setUser({
           id: firebaseUser.uid,
           name: firebaseUser.displayName || 'User',
           email: firebaseUser.email,
-          phone: firebaseUser.phoneNumber || localStorage.getItem('mdc_signup_phone'),
+          phone: firebaseUser.phoneNumber || fallbackPhone,
           photo: firebaseUser.photoURL,
           role: 'patient'
         });
+        if (firebaseUser.phoneNumber && fallbackPhone) {
+          localStorage.removeItem('mdc_signup_phone');
+        }
         setToken(idToken);
         localStorage.setItem('mdc_token', idToken);
       } else {
         setUser(null);
         setToken(null);
         localStorage.removeItem('mdc_token');
+        localStorage.removeItem('mdc_signup_phone');
       }
       setLoading(false);
     });
@@ -91,6 +97,7 @@ export function AppProvider({ children }) {
   const logout = async () => {
     try {
       await signOut(auth);
+      localStorage.removeItem('mdc_signup_phone');
       // logout logic is handled by onAuthStateChanged
     } catch (err) {
       console.error("Logout failed", err);
