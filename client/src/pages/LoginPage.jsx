@@ -6,6 +6,11 @@ import {
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, 
   updateProfile,
+  sendSignInLinkToEmail,
+  isSignInWithEmailLink,
+  signInWithEmailLink,
+  fetchSignInMethodsForEmail,
+  signOut,
   signInWithPhoneNumber, 
   RecaptchaVerifier 
 } from 'firebase/auth';
@@ -61,11 +66,34 @@ export default function LoginPage() {
   const [contactNumber, setContactNumber] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [phone, setPhone] = useState('');
+  const [otpEmail, setOtpEmail] = useState('');
+  const [otpEmailSent, setOtpEmailSent] = useState(false);
   const [otp, setOtp] = useState(['', '', '', '', '', '']); // Firebase uses 6 digits
   const [step, setStep] = useState('input'); // input, verify
   const [confirmationResult, setConfirmationResult] = useState(null);
   
   const otpRefs = [useRef(), useRef(), useRef(), useRef(), useRef(), useRef()];
+
+  useEffect(() => {
+    const completeEmailOtpSignIn = async () => {
+      if (!isSignInWithEmailLink(auth, window.location.href)) return;
+      setLoading(true);
+      setError('');
+      try {
+        const storedEmail = localStorage.getItem('mdc_email_for_signin');
+        const emailForSignIn = storedEmail || window.prompt('Please confirm your email for sign-in');
+        if (!emailForSignIn) throw new Error('Email is required to complete OTP sign-in.');
+        await signInWithEmailLink(auth, emailForSignIn, window.location.href);
+        localStorage.removeItem('mdc_email_for_signin');
+        navigate('/home', { replace: true });
+      } catch (err) {
+        setError(toFirebaseMessage(err));
+      } finally {
+        setLoading(false);
+      }
+    };
+    completeEmailOtpSignIn();
+  }, [navigate]);
 
   // Google Login
   const handleGoogleLogin = async () => {
@@ -102,11 +130,38 @@ export default function LoginPage() {
         await updateProfile(userCredential.user, { displayName: `${firstName} ${lastName}`.trim() });
         localStorage.setItem('mdc_signup_phone', `${DEFAULT_COUNTRY_CODE}${contactNumber}`);
         saveSignupProfile({ uid: userCredential.user.uid, firstName, lastName, email: normalizedEmail, contactNumber });
+        await signOut(auth);
+        setMode('email');
+        setPassword('');
+        setError('Registration successful. Please login with Email/Password or Email OTP.');
       } else {
         await signInWithEmailAndPassword(auth, normalizedEmail, normalizedPassword);
+        navigate('/home');
       }
-      navigate('/home');
     } catch (err) {
+      setError(toFirebaseMessage(err));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEmailOtpSend = async () => {
+    const normalizedEmail = otpEmail.trim().toLowerCase();
+    if (!normalizedEmail) return setError('Please enter your email address');
+    setLoading(true);
+    setError('');
+    try {
+      const methods = await fetchSignInMethodsForEmail(auth, normalizedEmail);
+      if (!methods.length) throw new Error('No account found with this email.');
+      const actionCodeSettings = {
+        url: `${window.location.origin}/login`,
+        handleCodeInApp: true,
+      };
+      await sendSignInLinkToEmail(auth, normalizedEmail, actionCodeSettings);
+      localStorage.setItem('mdc_email_for_signin', normalizedEmail);
+      setOtpEmailSent(true);
+    } catch (err) {
+      setOtpEmailSent(false);
       setError(toFirebaseMessage(err));
     } finally {
       setLoading(false);
@@ -190,6 +245,9 @@ export default function LoginPage() {
             <button className="btn btn-ghost btn-full" onClick={() => setMode('email')} style={{ gap: 12 }}>
               <Mail size={20} /> Login with Email
             </button>
+            <button className="btn btn-ghost btn-full" onClick={() => { setMode('emailOtp'); setOtpEmailSent(false); }} style={{ gap: 12 }}>
+              <Mail size={20} /> Login with OTP
+            </button>
             <div style={{ textAlign: 'center', marginTop: 8 }}>
               <span style={{ color: 'var(--text-muted)', fontSize: 14 }}>New here? </span>
               <button onClick={() => setMode('signup')} style={{ background: 'none', border: 'none', color: 'var(--blue)', fontWeight: 600, cursor: 'pointer' }}>Create Account</button>
@@ -238,6 +296,27 @@ export default function LoginPage() {
             <button className="btn btn-primary btn-full" style={{ marginTop: 8 }} onClick={() => handleEmailAction(mode === 'signup')} disabled={loading}>
               {loading ? 'Processing...' : mode === 'signup' ? 'Sign Up' : 'Sign In'}
             </button>
+          </div>
+        )}
+
+        {mode === 'emailOtp' && (
+          <div>
+            <button className="btn-back" onClick={() => { setMode('choice'); setError(''); setOtpEmailSent(false); }} style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'none', border: 'none', color: 'var(--text-muted)', marginBottom: 24, cursor: 'pointer' }}>
+              <ChevronLeft size={16} /> Back
+            </button>
+            <h3 style={{ marginBottom: 20 }}>Login with OTP</h3>
+            <div className="input-group">
+              <label className="input-label">Email Address</label>
+              <input className="input" type="email" placeholder="name@example.com" value={otpEmail} onChange={e => setOtpEmail(e.target.value)} />
+            </div>
+            <button className="btn btn-primary btn-full" style={{ marginTop: 8 }} onClick={handleEmailOtpSend} disabled={loading}>
+              {loading ? 'Sending OTP...' : 'Send OTP to Email'}
+            </button>
+            {otpEmailSent && (
+              <p style={{ marginTop: 14, color: 'var(--text-secondary)', fontSize: 13 }}>
+                OTP link sent to {otpEmail.trim().toLowerCase()}. Open the link from your email to complete login.
+              </p>
+            )}
           </div>
         )}
 

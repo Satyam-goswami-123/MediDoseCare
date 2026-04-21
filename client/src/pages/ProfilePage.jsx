@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
+import { updateProfile } from 'firebase/auth';
+import { auth } from '../firebase';
 
 
 export default function ProfilePage() {
@@ -9,13 +11,60 @@ export default function ProfilePage() {
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({ name: user?.name || '', age: user?.age || '', blood_group: user?.blood_group || '', emergency_contact: user?.emergency_contact || '' });
 
-  const save = () => { setUser((u) => ({ ...u, ...form })); setEditing(false); };
+  useEffect(() => {
+    setForm({
+      name: user?.name || '',
+      age: user?.age || '',
+      blood_group: user?.blood_group || '',
+      emergency_contact: user?.emergency_contact || ''
+    });
+  }, [user?.name, user?.age, user?.blood_group, user?.emergency_contact]);
+
+  const save = async () => {
+    const normalizedForm = {
+      name: (form.name || '').trim() || user?.name || 'User',
+      age: form.age || null,
+      blood_group: (form.blood_group || '').trim() || null,
+      emergency_contact: (form.emergency_contact || '').trim() || null
+    };
+
+    setUser((u) => ({ ...u, ...normalizedForm }));
+
+    if (user?.id) {
+      let profiles = {};
+      try {
+        profiles = JSON.parse(localStorage.getItem('mdc_user_profiles') || '{}');
+      } catch {
+        profiles = {};
+      }
+      profiles[user.id] = {
+        ...(profiles[user.id] || {}),
+        name: normalizedForm.name,
+        age: normalizedForm.age,
+        blood_group: normalizedForm.blood_group,
+        emergency_contact: normalizedForm.emergency_contact,
+        email: user?.email || profiles[user.id]?.email || null,
+        phone: user?.phone || profiles[user.id]?.phone || null,
+      };
+      localStorage.setItem('mdc_user_profiles', JSON.stringify(profiles));
+    }
+
+    if (auth.currentUser?.uid === user?.id && normalizedForm.name) {
+      try {
+        await updateProfile(auth.currentUser, { displayName: normalizedForm.name });
+      } catch {
+        // ignore profile sync failures and keep locally saved data
+      }
+    }
+
+    setEditing(false);
+  };
 
   const sections = [
     { label: 'Medical Info', items: [
-      { icon: '🩸', label: 'Blood Group', value: user?.blood_group || 'B+' },
-      { icon: '🎂', label: 'Age', value: `${user?.age || 72} years` },
-      { icon: '📞', label: 'Emergency Contact', value: user?.emergency_contact || '9876543211' },
+      { icon: '🩸', label: 'Blood Group', value: user?.blood_group || null },
+      { icon: '🎂', label: 'Age', value: user?.age ? `${user.age} years` : null },
+      { icon: '📞', label: 'Emergency Contact', value: user?.emergency_contact || null },
       { icon: '💊', label: 'Active Role', value: user?.role || 'Patient' },
     ]},
     { label: 'Quick Links', items: [
