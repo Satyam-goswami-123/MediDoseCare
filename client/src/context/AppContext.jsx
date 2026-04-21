@@ -81,14 +81,20 @@ export function AppProvider({ children }) {
         const name = firebaseUser.displayName || storedProfile.name || 'User';
         const email = firebaseUser.email || storedProfile.email || null;
         const phone = firebaseUser.phoneNumber || storedProfile.phone || fallbackPhone || null;
+        const age = storedProfile.age ?? null;
+        const blood_group = storedProfile.blood_group ?? null;
+        const emergency_contact = null;
 
-        upsertStoredProfile(firebaseUser.uid, { name, email, phone });
+        upsertStoredProfile(firebaseUser.uid, { name, email, age, blood_group });
 
         setUser({
           id: firebaseUser.uid,
           name,
           email,
           phone,
+          age,
+          blood_group,
+          emergency_contact,
           photo: firebaseUser.photoURL,
           role: 'patient'
         });
