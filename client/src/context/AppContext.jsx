@@ -103,11 +103,25 @@ export function AppProvider({ children }) {
         }
         setToken(idToken);
         localStorage.setItem('mdc_token', idToken);
+        localStorage.removeItem('mdc_custom_auth');
       } else {
-        setUser(null);
-        setToken(null);
-        localStorage.removeItem('mdc_token');
-        localStorage.removeItem('mdc_signup_phone');
+        let customAuth = null;
+        try {
+          customAuth = JSON.parse(localStorage.getItem('mdc_custom_auth') || 'null');
+        } catch {
+          customAuth = null;
+        }
+
+        if (customAuth?.token && customAuth?.user) {
+          setUser(customAuth.user);
+          setToken(customAuth.token);
+          localStorage.setItem('mdc_token', customAuth.token);
+        } else {
+          setUser(null);
+          setToken(null);
+          localStorage.removeItem('mdc_token');
+          localStorage.removeItem('mdc_signup_phone');
+        }
       }
       setLoading(false);
     });
@@ -124,7 +138,15 @@ export function AppProvider({ children }) {
 
   const logout = async () => {
     try {
-      await signOut(auth);
+      localStorage.removeItem('mdc_custom_auth');
+      if (auth.currentUser) {
+        await signOut(auth);
+      } else {
+        setUser(null);
+        setToken(null);
+        localStorage.removeItem('mdc_token');
+        localStorage.removeItem('mdc_signup_phone');
+      }
       localStorage.removeItem('mdc_signup_phone');
       // logout logic is handled by onAuthStateChanged
     } catch (err) {
