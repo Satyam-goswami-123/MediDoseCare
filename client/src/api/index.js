@@ -19,6 +19,8 @@ api.interceptors.response.use(
 export const authApi = {
   sendOtp: (phone) => api.post('/auth/send-otp', { phone }),
   verifyOtp: (phone, otp, name) => api.post('/auth/verify-otp', { phone, otp, name }),
+  sendEmailOtp: (email) => api.post('/auth/send-otp', { email }),
+  verifyEmailOtp: (email, otp, name) => api.post('/auth/verify-otp', { email, otp, name }),
 };
 
 export const medicinesApi = {

@@ -67,23 +67,71 @@ export function AppProvider({ children }) {
 
   // Firebase Auth Listener
   useEffect(() => {
+    const getStoredProfiles = () => {
+      try {
+        return JSON.parse(localStorage.getItem('mdc_user_profiles') || '{}');
+      } catch {
+        return {};
+      }
+    };
+
+    const upsertStoredProfile = (uid, profile) => {
+      if (!uid) return;
+      const profiles = getStoredProfiles();
+      profiles[uid] = { ...(profiles[uid] || {}), ...profile };
+      localStorage.setItem('mdc_user_profiles', JSON.stringify(profiles));
+    };
+
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         const idToken = await firebaseUser.getIdToken();
+        const storedFallbackPhone = localStorage.getItem('mdc_signup_phone');
+        const fallbackPhone = /^\+91\d{10}$/.test(storedFallbackPhone || '') ? storedFallbackPhone : null;
+        const storedProfile = getStoredProfiles()[firebaseUser.uid] || {};
+        const name = firebaseUser.displayName || storedProfile.name || 'User';
+        const email = firebaseUser.email || storedProfile.email || null;
+        const phone = firebaseUser.phoneNumber || storedProfile.phone || fallbackPhone || null;
+        const age = storedProfile.age ?? null;
+        const blood_group = storedProfile.blood_group ?? null;
+        const emergency_contact = null;
+
+        upsertStoredProfile(firebaseUser.uid, { name, email, age, blood_group });
+
         setUser({
           id: firebaseUser.uid,
-          name: firebaseUser.displayName || 'User',
-          email: firebaseUser.email,
-          phone: firebaseUser.phoneNumber,
+          name,
+          email,
+          phone,
+          age,
+          blood_group,
+          emergency_contact,
           photo: firebaseUser.photoURL,
           role: 'patient'
         });
+        if (firebaseUser.phoneNumber && fallbackPhone) {
+          localStorage.removeItem('mdc_signup_phone');
+        }
         setToken(idToken);
         localStorage.setItem('mdc_token', idToken);
+        localStorage.removeItem('mdc_custom_auth');
       } else {
-        setUser(null);
-        setToken(null);
-        localStorage.removeItem('mdc_token');
+        let customAuth = null;
+        try {
+          customAuth = JSON.parse(localStorage.getItem('mdc_custom_auth') || 'null');
+        } catch {
+          customAuth = null;
+        }
+
+        if (customAuth?.token && customAuth?.user) {
+          setUser(customAuth.user);
+          setToken(customAuth.token);
+          localStorage.setItem('mdc_token', customAuth.token);
+        } else {
+          setUser(null);
+          setToken(null);
+          localStorage.removeItem('mdc_token');
+          localStorage.removeItem('mdc_signup_phone');
+        }
       }
       setLoading(false);
     });
@@ -100,7 +148,15 @@ export function AppProvider({ children }) {
 
   const logout = async () => {
     try {
-      await signOut(auth);
+      localStorage.removeItem('mdc_custom_auth');
+      if (auth.currentUser) {
+        await signOut(auth);
+      } else {
+        setUser(null);
+        setToken(null);
+        localStorage.removeItem('mdc_token');
+      }
+      localStorage.removeItem('mdc_signup_phone');
       // logout logic is handled by onAuthStateChanged
     } catch (err) {
       console.error("Logout failed", err);

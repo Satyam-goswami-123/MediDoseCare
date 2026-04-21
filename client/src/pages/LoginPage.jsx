@@ -1,26 +1,72 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useApp } from '../context/AppContext';
+import { authApi } from '../api';
 import { auth, googleProvider } from '../firebase';
 import { 
   signInWithPopup, 
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, 
+  updateProfile,
+  signOut,
   signInWithPhoneNumber, 
   RecaptchaVerifier 
 } from 'firebase/auth';
 import { Mail, Phone, Chrome, ChevronLeft, Eye, EyeOff } from 'lucide-react';
 
+const DEFAULT_COUNTRY_CODE = '+91';
+const DEFAULT_PHONE_DIGITS = 10;
+const MIN_PASSWORD_LENGTH = 6;
+
+const toFirebaseMessage = (err) => {
+  const code = err?.code;
+  if (code === 'auth/invalid-credential') return 'Invalid email or password. Please check your credentials and try again.';
+  if (code === 'auth/user-not-found') return 'No account found with this email.';
+  if (code === 'auth/wrong-password') return 'Incorrect password. Please try again.';
+  if (code === 'auth/email-already-in-use') return 'This email is already registered. Please sign in instead.';
+  if (code === 'auth/weak-password') return `Password must be at least ${MIN_PASSWORD_LENGTH} characters.`;
+  if (code === 'auth/invalid-email') return 'Please enter a valid email address.';
+  return err?.error || err?.message || 'Something went wrong. Please try again.';
+};
+
+const saveSignupProfile = ({ uid, firstName, lastName, email }) => {
+  if (!uid) return;
+  const fullName = `${firstName} ${lastName}`.trim();
+  const normalizedEmail = (email || '').trim().toLowerCase();
+
+  let profiles = {};
+  try {
+    profiles = JSON.parse(localStorage.getItem('mdc_user_profiles') || '{}');
+  } catch {
+    profiles = {};
+  }
+
+  profiles[uid] = {
+    name: fullName || 'User',
+    email: normalizedEmail || null,
+  };
+  localStorage.setItem('mdc_user_profiles', JSON.stringify(profiles));
+};
+
 export default function LoginPage() {
   const navigate = useNavigate();
+  const { login } = useApp();
   const [mode, setMode] = useState('choice'); // choice, email, phone, signup
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   
   // Form States
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [contactNumber, setContactNumber] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [phone, setPhone] = useState('');
+  const [otpEmail, setOtpEmail] = useState('');
+  const [otpEmailSent, setOtpEmailSent] = useState(false);
+  const [otpEmailCode, setOtpEmailCode] = useState('');
   const [otp, setOtp] = useState(['', '', '', '', '', '']); // Firebase uses 6 digits
   const [step, setStep] = useState('input'); // input, verify
   const [confirmationResult, setConfirmationResult] = useState(null);
@@ -43,18 +89,83 @@ export default function LoginPage() {
 
   // Email Login/Signup
   const handleEmailAction = async (isSignup) => {
-    if (!email || !password) return setError('Please fill all fields');
+    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedPassword = password;
+
+    if (isSignup) {
+      if (!firstName || !lastName || !contactNumber || !normalizedEmail || !normalizedPassword) return setError('Please fill all fields');
+      if (!new RegExp(`^\\d{${DEFAULT_PHONE_DIGITS}}$`).test(contactNumber)) return setError('Contact number must be exactly 10 digits');
+      if (normalizedPassword.length < MIN_PASSWORD_LENGTH) return setError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters`);
+    } else if (!normalizedEmail || !normalizedPassword) {
+      return setError('Please fill all fields');
+    }
+
     setLoading(true);
     setError('');
+    setSuccess('');
     try {
       if (isSignup) {
-        await createUserWithEmailAndPassword(auth, email, password);
+        const userCredential = await createUserWithEmailAndPassword(auth, normalizedEmail, normalizedPassword);
+        await updateProfile(userCredential.user, { displayName: `${firstName} ${lastName}`.trim() });
+        localStorage.setItem('mdc_signup_phone', `${DEFAULT_COUNTRY_CODE}${contactNumber}`);
+        saveSignupProfile({ uid: userCredential.user.uid, firstName, lastName, email: normalizedEmail });
+        await signOut(auth);
+        setMode('email');
+        setPassword('');
+        setSuccess('Registration successful. Please login with Email/Password or Email OTP.');
       } else {
-        await signInWithEmailAndPassword(auth, email, password);
+        await signInWithEmailAndPassword(auth, normalizedEmail, normalizedPassword);
+        navigate('/home');
       }
+    } catch (err) {
+      setError(toFirebaseMessage(err));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEmailOtpSend = async () => {
+    const normalizedEmail = otpEmail.trim().toLowerCase();
+    if (!normalizedEmail) return setError('Please enter your email address');
+    setLoading(true);
+    setError('');
+    setSuccess('');
+    try {
+      await authApi.sendEmailOtp(normalizedEmail);
+      setOtpEmailSent(true);
+      setOtpEmailCode('');
+      setSuccess('A 6-digit OTP has been sent to your email.');
+    } catch (err) {
+      setOtpEmailSent(false);
+      setError(toFirebaseMessage(err));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEmailOtpVerify = async () => {
+    const normalizedEmail = otpEmail.trim().toLowerCase();
+    const normalizedOtp = otpEmailCode.trim();
+    if (!normalizedEmail) return setError('Please enter your email address');
+    if (!/^\d{6}$/.test(normalizedOtp)) return setError('Enter a valid 6-digit OTP');
+
+    setLoading(true);
+    setError('');
+    setSuccess('');
+    try {
+      const response = await authApi.verifyEmailOtp(normalizedEmail, normalizedOtp);
+      if (!response?.token || !response?.user) {
+        throw new Error('Login failed. Please try again.');
+      }
+
+      localStorage.setItem('mdc_custom_auth', JSON.stringify({
+        token: response.token,
+        user: response.user,
+      }));
+      login(response.user, response.token);
       navigate('/home');
     } catch (err) {
-      setError(err.message);
+      setError(toFirebaseMessage(err));
     } finally {
       setLoading(false);
     }
@@ -70,12 +181,12 @@ export default function LoginPage() {
   };
 
   const handlePhoneSubmit = async () => {
-    if (phone.length < 10) return setError('Invalid phone number');
+    if (phone.length < DEFAULT_PHONE_DIGITS) return setError('Invalid phone number');
     setLoading(true);
     setError('');
     try {
       setupRecaptcha();
-      const phoneNumber = `+91${phone}`; // Default to India, adjust as needed
+      const phoneNumber = `${DEFAULT_COUNTRY_CODE}${phone}`; // Default to India, adjust as needed
       const confirmation = await signInWithPhoneNumber(auth, phoneNumber, window.recaptchaVerifier);
       setConfirmationResult(confirmation);
       setStep('verify');
@@ -124,6 +235,11 @@ export default function LoginPage() {
           {error}
         </div>
       )}
+      {success && (
+        <div className="card" style={{ marginBottom: 20, borderColor: 'var(--green)', background: 'rgba(34,197,94,0.12)', color: 'var(--green)', fontSize: 13, padding: 12 }}>
+          {success}
+        </div>
+      )}
 
       <div className="slide-up">
         {mode === 'choice' && (
@@ -137,6 +253,9 @@ export default function LoginPage() {
             <button className="btn btn-ghost btn-full" onClick={() => setMode('email')} style={{ gap: 12 }}>
               <Mail size={20} /> Login with Email
             </button>
+            <button className="btn btn-ghost btn-full" onClick={() => { setMode('emailOtp'); setOtpEmailSent(false); }} style={{ gap: 12 }}>
+              <Mail size={20} /> Login with OTP
+            </button>
             <div style={{ textAlign: 'center', marginTop: 8 }}>
               <span style={{ color: 'var(--text-muted)', fontSize: 14 }}>New here? </span>
               <button onClick={() => setMode('signup')} style={{ background: 'none', border: 'none', color: 'var(--blue)', fontWeight: 600, cursor: 'pointer' }}>Create Account</button>
@@ -146,12 +265,31 @@ export default function LoginPage() {
 
         {(mode === 'email' || mode === 'signup') && (
           <div>
-            <button className="btn-back" onClick={() => { setMode('choice'); setError(''); }} style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'none', border: 'none', color: 'var(--text-muted)', marginBottom: 24, cursor: 'pointer' }}>
+            <button className="btn-back" onClick={() => { setMode('choice'); setError(''); setSuccess(''); }} style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'none', border: 'none', color: 'var(--text-muted)', marginBottom: 24, cursor: 'pointer' }}>
               <ChevronLeft size={16} /> Back
             </button>
             <h3 style={{ marginBottom: 20 }}>{mode === 'signup' ? 'Create Account' : 'Welcome Back'}</h3>
+            {mode === 'signup' && (
+              <>
+                <div className="input-group">
+                  <label className="input-label">First Name</label>
+                  <input className="input" type="text" placeholder="Enter first name" value={firstName} onChange={e => setFirstName(e.target.value)} />
+                </div>
+                <div className="input-group">
+                  <label className="input-label">Last Name</label>
+                  <input className="input" type="text" placeholder="Enter last name" value={lastName} onChange={e => setLastName(e.target.value)} />
+                </div>
+                <div className="input-group">
+                  <label className="input-label">Contact Number</label>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <div className="input" style={{ width: 60, textAlign: 'center', background: 'var(--bg-secondary)' }}>{DEFAULT_COUNTRY_CODE}</div>
+                    <input className="input" type="tel" maxLength={DEFAULT_PHONE_DIGITS} placeholder="9876543210" value={contactNumber} onChange={e => setContactNumber(e.target.value.replace(/\D/g, ''))} />
+                  </div>
+                </div>
+              </>
+            )}
             <div className="input-group">
-              <label className="input-label">Email Address</label>
+              <label className="input-label">{mode === 'signup' ? 'Mail ID' : 'Email Address'}</label>
               <input className="input" type="email" placeholder="name@example.com" value={email} onChange={e => setEmail(e.target.value)} />
             </div>
             <div className="input-group">
@@ -169,9 +307,43 @@ export default function LoginPage() {
           </div>
         )}
 
+        {mode === 'emailOtp' && (
+          <div>
+            <button className="btn-back" onClick={() => { setMode('choice'); setError(''); setSuccess(''); setOtpEmailSent(false); setOtpEmailCode(''); }} style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'none', border: 'none', color: 'var(--text-muted)', marginBottom: 24, cursor: 'pointer' }}>
+              <ChevronLeft size={16} /> Back
+            </button>
+            <h3 style={{ marginBottom: 20 }}>Login with OTP</h3>
+            <div className="input-group">
+              <label className="input-label">Email Address</label>
+              <input className="input" type="email" placeholder="name@example.com" value={otpEmail} onChange={e => setOtpEmail(e.target.value)} />
+            </div>
+            <button className="btn btn-primary btn-full" style={{ marginTop: 8 }} onClick={handleEmailOtpSend} disabled={loading}>
+              {loading ? 'Sending OTP...' : 'Send OTP to Email'}
+            </button>
+            {otpEmailSent && (
+              <>
+                <div className="input-group" style={{ marginTop: 14 }}>
+                  <label className="input-label">Enter OTP</label>
+                  <input
+                    className="input"
+                    type="tel"
+                    maxLength={6}
+                    placeholder="6-digit OTP"
+                    value={otpEmailCode}
+                    onChange={e => setOtpEmailCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  />
+                </div>
+                <button className="btn btn-primary btn-full" style={{ marginTop: 8 }} onClick={handleEmailOtpVerify} disabled={loading}>
+                  {loading ? 'Verifying...' : 'Verify OTP & Login'}
+                </button>
+              </>
+            )}
+          </div>
+        )}
+
         {mode === 'phone' && (
           <div>
-            <button className="btn-back" onClick={() => { setMode('choice'); setStep('input'); setError(''); }} style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'none', border: 'none', color: 'var(--text-muted)', marginBottom: 24, cursor: 'pointer' }}>
+            <button className="btn-back" onClick={() => { setMode('choice'); setStep('input'); setError(''); setSuccess(''); }} style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'none', border: 'none', color: 'var(--text-muted)', marginBottom: 24, cursor: 'pointer' }}>
               <ChevronLeft size={16} /> Back
             </button>
             <h3 style={{ marginBottom: 20 }}>Login with Phone</h3>
@@ -181,8 +353,8 @@ export default function LoginPage() {
                 <div className="input-group">
                   <label className="input-label">Mobile Number</label>
                   <div style={{ display: 'flex', gap: 8 }}>
-                    <div className="input" style={{ width: 60, textAlign: 'center', background: 'var(--bg-secondary)' }}>+91</div>
-                    <input className="input" type="tel" maxLength={10} placeholder="9876543210" value={phone} onChange={e => setPhone(e.target.value.replace(/\D/g, ''))} />
+                    <div className="input" style={{ width: 60, textAlign: 'center', background: 'var(--bg-secondary)' }}>{DEFAULT_COUNTRY_CODE}</div>
+                    <input className="input" type="tel" maxLength={DEFAULT_PHONE_DIGITS} placeholder="9876543210" value={phone} onChange={e => setPhone(e.target.value.replace(/\D/g, ''))} />
                   </div>
                 </div>
                 <button className="btn btn-primary btn-full" style={{ marginTop: 8 }} onClick={handlePhoneSubmit} disabled={loading}>
@@ -191,7 +363,7 @@ export default function LoginPage() {
               </>
             ) : (
               <>
-                <p style={{ textAlign: 'center', color: 'var(--text-secondary)', marginBottom: 24 }}>Enter verification code sent to +91 {phone}</p>
+                <p style={{ textAlign: 'center', color: 'var(--text-secondary)', marginBottom: 24 }}>Enter verification code sent to {DEFAULT_COUNTRY_CODE} {phone}</p>
                 <div className="otp-row" style={{ marginBottom: 24, justifyContent: 'center' }}>
                   {otp.map((d, i) => (
                     <input key={i} ref={otpRefs[i]} className="otp-box" style={{ width: 44, height: 50, fontSize: 20 }} type="tel" maxLength={1} value={d}
