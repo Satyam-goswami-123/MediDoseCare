@@ -13,6 +13,39 @@ import { Mail, Phone, Chrome, ChevronLeft, Eye, EyeOff } from 'lucide-react';
 
 const DEFAULT_COUNTRY_CODE = '+91';
 const DEFAULT_PHONE_DIGITS = 10;
+const MIN_PASSWORD_LENGTH = 6;
+
+const toFirebaseMessage = (err) => {
+  const code = err?.code;
+  if (code === 'auth/invalid-credential') return 'Invalid email or password. Please check your credentials and try again.';
+  if (code === 'auth/user-not-found') return 'No account found with this email.';
+  if (code === 'auth/wrong-password') return 'Incorrect password. Please try again.';
+  if (code === 'auth/email-already-in-use') return 'This email is already registered. Please sign in instead.';
+  if (code === 'auth/weak-password') return `Password must be at least ${MIN_PASSWORD_LENGTH} characters.`;
+  if (code === 'auth/invalid-email') return 'Please enter a valid email address.';
+  return err?.message || 'Something went wrong. Please try again.';
+};
+
+const saveSignupProfile = ({ uid, firstName, lastName, email, contactNumber }) => {
+  if (!uid) return;
+  const fullName = `${firstName} ${lastName}`.trim();
+  const normalizedEmail = (email || '').trim().toLowerCase();
+  const phone = `${DEFAULT_COUNTRY_CODE}${contactNumber}`;
+
+  let profiles = {};
+  try {
+    profiles = JSON.parse(localStorage.getItem('mdc_user_profiles') || '{}');
+  } catch {
+    profiles = {};
+  }
+
+  profiles[uid] = {
+    name: fullName || 'User',
+    email: normalizedEmail || null,
+    phone
+  };
+  localStorage.setItem('mdc_user_profiles', JSON.stringify(profiles));
+};
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -50,25 +83,31 @@ export default function LoginPage() {
 
   // Email Login/Signup
   const handleEmailAction = async (isSignup) => {
+    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedPassword = password;
+
     if (isSignup) {
-      if (!firstName || !lastName || !contactNumber || !email || !password) return setError('Please fill all fields');
+      if (!firstName || !lastName || !contactNumber || !normalizedEmail || !normalizedPassword) return setError('Please fill all fields');
       if (!new RegExp(`^\\d{${DEFAULT_PHONE_DIGITS}}$`).test(contactNumber)) return setError('Contact number must be exactly 10 digits');
-    } else if (!email || !password) {
+      if (normalizedPassword.length < MIN_PASSWORD_LENGTH) return setError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters`);
+    } else if (!normalizedEmail || !normalizedPassword) {
       return setError('Please fill all fields');
     }
+
     setLoading(true);
     setError('');
     try {
       if (isSignup) {
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const userCredential = await createUserWithEmailAndPassword(auth, normalizedEmail, normalizedPassword);
         await updateProfile(userCredential.user, { displayName: `${firstName} ${lastName}`.trim() });
         localStorage.setItem('mdc_signup_phone', `${DEFAULT_COUNTRY_CODE}${contactNumber}`);
+        saveSignupProfile({ uid: userCredential.user.uid, firstName, lastName, email: normalizedEmail, contactNumber });
       } else {
-        await signInWithEmailAndPassword(auth, email, password);
+        await signInWithEmailAndPassword(auth, normalizedEmail, normalizedPassword);
       }
       navigate('/home');
     } catch (err) {
-      setError(err.message);
+      setError(toFirebaseMessage(err));
     } finally {
       setLoading(false);
     }
