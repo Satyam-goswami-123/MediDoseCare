@@ -4,7 +4,7 @@ import { Bell, Vibrate, Volume2, Globe, Cloud, Moon, ArrowLeft, ChevronRight, To
 
 export default function SettingsPage() {
   const navigate = useNavigate();
-  const { settings, updateSettings, theme, toggleTheme, triggerReminder } = useApp();
+  const { settings, updateSettings, theme, toggleTheme, triggerReminder, language, setLanguage } = useApp();
 
   const handleToggle = (key) => {
     updateSettings({ [key]: !settings[key] });
@@ -110,9 +110,15 @@ export default function SettingsPage() {
         {
           id: 'language',
           label: 'Display Language',
-          desc: 'English (US)',
+          desc: language === 'hi' ? 'हिंदी' : 'English (US)',
           icon: <Globe size={20} className="text-orange" />,
-          type: 'link'
+          type: 'select',
+          options: [
+            { label: 'English', value: 'en' },
+            { label: 'हिंदी', value: 'hi' }
+          ],
+          value: language,
+          action: (val) => setLanguage(val)
         },
         {
           id: 'sync',

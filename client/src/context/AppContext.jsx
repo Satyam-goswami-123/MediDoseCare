@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect } from 'react';
 import { auth } from '../firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { Pill, Flame, Trophy, AlertTriangle, ClipboardList, Zap } from 'lucide-react';
+import { applyLanguageToUI } from '../utils/languageTranslator';
 
 const AppContext = createContext(null);
 
@@ -46,6 +47,7 @@ export function AppProvider({ children }) {
   ]);
 
   const [theme, setTheme] = useState(localStorage.getItem('mdc_theme') || 'dark');
+  const [language, setLanguage] = useState(localStorage.getItem('mdc_language') || 'en');
   const [settings, setSettings] = useState(() => {
     const saved = localStorage.getItem('mdc_settings');
     return saved ? JSON.parse(saved) : {
@@ -69,6 +71,12 @@ export function AppProvider({ children }) {
       document.documentElement.classList.remove('light-mode');
     }
   }, [theme]);
+
+  useEffect(() => {
+    localStorage.setItem('mdc_language', language);
+    document.documentElement.setAttribute('lang', language === 'hi' ? 'hi' : 'en');
+    applyLanguageToUI(language);
+  }, [language]);
 
   // Firebase Auth Listener
   useEffect(() => {
@@ -293,7 +301,9 @@ export function AppProvider({ children }) {
       setUser,
       settings,
       updateSettings,
-      triggerReminder
+      triggerReminder,
+      language,
+      setLanguage
     }}>
       {children}
     </AppContext.Provider>
