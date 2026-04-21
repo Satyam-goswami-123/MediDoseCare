@@ -84,7 +84,7 @@ export default function LoginPage() {
   // Email Login/Signup
   const handleEmailAction = async (isSignup) => {
     const normalizedEmail = email.trim().toLowerCase();
-    const normalizedPassword = password.trim();
+    const normalizedPassword = password;
 
     if (isSignup) {
       if (!firstName || !lastName || !contactNumber || !normalizedEmail || !normalizedPassword) return setError('Please fill all fields');
