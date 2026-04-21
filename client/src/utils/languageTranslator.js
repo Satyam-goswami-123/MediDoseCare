@@ -177,7 +177,7 @@ const WORD_TRANSLATIONS = {
   sugar: 'शुगर',
   heart: 'हृदय',
   rate: 'गति',
-  upcoming: 'आनेवाली',
+  upcoming: 'आने वाली',
   report: 'रिपोर्ट',
   reports: 'रिपोर्ट्स',
   add: 'जोड़ें',
@@ -263,11 +263,12 @@ function translateText(text, language) {
   }
 
   let translated = text;
-  const phraseEntries = Object.entries(PHRASE_TRANSLATIONS).sort((a, b) => b[0].length - a[0].length);
+  const phraseEntries = Object.entries(PHRASE_TRANSLATIONS)
+    .filter(([phrase]) => phrase && phrase.length > 2 && phrase.includes(' '))
+    .sort((a, b) => b[0].length - a[0].length);
   phraseEntries.forEach(([phrase, value]) => {
-    if (!phrase || phrase.length < 3) return;
     const escaped = phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    translated = translated.replace(new RegExp(`\\b${escaped}\\b`, 'gi'), value);
+    translated = translated.replace(new RegExp(escaped, 'gi'), value);
   });
 
   // Fallback to term-level translation for dynamic strings that are not explicitly mapped.
