@@ -1,6 +1,5 @@
 const PHRASE_TRANSLATIONS = {
   'Settings': 'सेटिंग्स',
-  'Notification Special': 'सूचना सेटिंग्स',
   'Notification Settings': 'सूचना सेटिंग्स',
   'Appearance': 'रूप',
   'System': 'सिस्टम',
