@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # MediDose Care 💊
 
 A full-stack healthcare platform for senior citizens — smart medicine reminders, health monitoring, prescription management, and emergency SOS.
@@ -27,10 +26,31 @@ source server/schema.sql
 
 ### 2. Server Setup
 ```bash
-cd server
-# Edit .env with your MySQL credentials
+cd MediDoseCare
+# Install backend dependencies at repo root
 npm install
-node index.js          # Runs on http://localhost:5000
+node server/index.js   # Runs on http://localhost:5000
+```
+
+Create `.env` in repository root with:
+```env
+# Database
+DB_HOST=localhost
+DB_USER=root
+DB_PASS=
+DB_NAME=medidosecare
+
+# Auth
+JWT_SECRET=change_this_secret
+
+# Email OTP (required for real email OTP delivery)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=your_email@gmail.com
+SMTP_PASS=your_email_app_password
+SMTP_FROM="MediDoseCare <your_email@gmail.com>"
+CLIENT_URL=http://localhost:5173
 ```
 
 ### 3. Client Setup
@@ -69,7 +89,3 @@ Open http://localhost:5173 in Chrome DevTools > iPhone 14 Pro device frame
 - 🎙️ Voice assistant integration ready
 
 > **Note:** The app runs in demo mode without MySQL connection — all demo data is pre-loaded in the React context.
-=======
-# MediDoseCare
-understand the name of repo then you can know the description.
->>>>>>> 0b3265c070a6d2b5f57283aa71956839439905bd

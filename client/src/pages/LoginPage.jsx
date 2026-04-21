@@ -1,14 +1,13 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useApp } from '../context/AppContext';
+import { authApi } from '../api';
 import { auth, googleProvider } from '../firebase';
 import { 
   signInWithPopup, 
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, 
   updateProfile,
-  sendSignInLinkToEmail,
-  isSignInWithEmailLink,
-  signInWithEmailLink,
   signOut,
   signInWithPhoneNumber, 
   RecaptchaVerifier 
@@ -18,7 +17,6 @@ import { Mail, Phone, Chrome, ChevronLeft, Eye, EyeOff } from 'lucide-react';
 const DEFAULT_COUNTRY_CODE = '+91';
 const DEFAULT_PHONE_DIGITS = 10;
 const MIN_PASSWORD_LENGTH = 6;
-const LOGIN_PATH = '/login';
 
 const toFirebaseMessage = (err) => {
   const code = err?.code;
@@ -28,7 +26,7 @@ const toFirebaseMessage = (err) => {
   if (code === 'auth/email-already-in-use') return 'This email is already registered. Please sign in instead.';
   if (code === 'auth/weak-password') return `Password must be at least ${MIN_PASSWORD_LENGTH} characters.`;
   if (code === 'auth/invalid-email') return 'Please enter a valid email address.';
-  return err?.message || 'Something went wrong. Please try again.';
+  return err?.error || err?.message || 'Something went wrong. Please try again.';
 };
 
 const saveSignupProfile = ({ uid, firstName, lastName, email }) => {
@@ -52,6 +50,7 @@ const saveSignupProfile = ({ uid, firstName, lastName, email }) => {
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const { login } = useApp();
   const [mode, setMode] = useState('choice'); // choice, email, phone, signup
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -67,37 +66,12 @@ export default function LoginPage() {
   const [phone, setPhone] = useState('');
   const [otpEmail, setOtpEmail] = useState('');
   const [otpEmailSent, setOtpEmailSent] = useState(false);
+  const [otpEmailCode, setOtpEmailCode] = useState('');
   const [otp, setOtp] = useState(['', '', '', '', '', '']); // Firebase uses 6 digits
   const [step, setStep] = useState('input'); // input, verify
   const [confirmationResult, setConfirmationResult] = useState(null);
   
   const otpRefs = [useRef(), useRef(), useRef(), useRef(), useRef(), useRef()];
-
-  useEffect(() => {
-    const completeEmailOtpSignIn = async () => {
-      if (!isSignInWithEmailLink(auth, window.location.href)) return;
-      setLoading(true);
-      setError('');
-      setSuccess('');
-      try {
-        const storedEmail = localStorage.getItem('mdc_email_for_signin');
-        if (!storedEmail) {
-          setMode('emailOtp');
-          setError('Please enter your email and request OTP again.');
-          return;
-        }
-        const emailForSignIn = storedEmail;
-        await signInWithEmailLink(auth, emailForSignIn, window.location.href);
-        localStorage.removeItem('mdc_email_for_signin');
-        navigate('/home', { replace: true });
-      } catch (err) {
-        setError(toFirebaseMessage(err));
-      } finally {
-        setLoading(false);
-      }
-    };
-    completeEmailOtpSignIn();
-  }, [navigate]);
 
   // Google Login
   const handleGoogleLogin = async () => {
@@ -157,16 +131,40 @@ export default function LoginPage() {
     setError('');
     setSuccess('');
     try {
-      const actionCodeSettings = {
-        url: `${window.location.origin}${LOGIN_PATH}`,
-        handleCodeInApp: true,
-      };
-      await sendSignInLinkToEmail(auth, normalizedEmail, actionCodeSettings);
-      localStorage.setItem('mdc_email_for_signin', normalizedEmail);
+      await authApi.sendEmailOtp(normalizedEmail);
       setOtpEmailSent(true);
-      setSuccess('If an account exists for this email, an OTP login link has been sent.');
+      setOtpEmailCode('');
+      setSuccess('A 6-digit OTP has been sent to your email.');
     } catch (err) {
       setOtpEmailSent(false);
+      setError(toFirebaseMessage(err));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEmailOtpVerify = async () => {
+    const normalizedEmail = otpEmail.trim().toLowerCase();
+    const normalizedOtp = otpEmailCode.trim();
+    if (!normalizedEmail) return setError('Please enter your email address');
+    if (!/^\d{6}$/.test(normalizedOtp)) return setError('Enter a valid 6-digit OTP');
+
+    setLoading(true);
+    setError('');
+    setSuccess('');
+    try {
+      const response = await authApi.verifyEmailOtp(normalizedEmail, normalizedOtp);
+      if (!response?.token || !response?.user) {
+        throw new Error('Login failed. Please try again.');
+      }
+
+      localStorage.setItem('mdc_custom_auth', JSON.stringify({
+        token: response.token,
+        user: response.user,
+      }));
+      login(response.user, response.token);
+      navigate('/home');
+    } catch (err) {
       setError(toFirebaseMessage(err));
     } finally {
       setLoading(false);
@@ -311,7 +309,7 @@ export default function LoginPage() {
 
         {mode === 'emailOtp' && (
           <div>
-            <button className="btn-back" onClick={() => { setMode('choice'); setError(''); setSuccess(''); setOtpEmailSent(false); }} style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'none', border: 'none', color: 'var(--text-muted)', marginBottom: 24, cursor: 'pointer' }}>
+            <button className="btn-back" onClick={() => { setMode('choice'); setError(''); setSuccess(''); setOtpEmailSent(false); setOtpEmailCode(''); }} style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'none', border: 'none', color: 'var(--text-muted)', marginBottom: 24, cursor: 'pointer' }}>
               <ChevronLeft size={16} /> Back
             </button>
             <h3 style={{ marginBottom: 20 }}>Login with OTP</h3>
@@ -323,9 +321,22 @@ export default function LoginPage() {
               {loading ? 'Sending OTP...' : 'Send OTP to Email'}
             </button>
             {otpEmailSent && (
-              <p style={{ marginTop: 14, color: 'var(--text-secondary)', fontSize: 13 }}>
-                OTP link sent to {otpEmail.trim().toLowerCase()}. Open the link from your email to complete login.
-              </p>
+              <>
+                <div className="input-group" style={{ marginTop: 14 }}>
+                  <label className="input-label">Enter OTP</label>
+                  <input
+                    className="input"
+                    type="tel"
+                    maxLength={6}
+                    placeholder="6-digit OTP"
+                    value={otpEmailCode}
+                    onChange={e => setOtpEmailCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  />
+                </div>
+                <button className="btn btn-primary btn-full" style={{ marginTop: 8 }} onClick={handleEmailOtpVerify} disabled={loading}>
+                  {loading ? 'Verifying...' : 'Verify OTP & Login'}
+                </button>
+              </>
             )}
           </div>
         )}
