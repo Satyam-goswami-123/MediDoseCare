@@ -238,6 +238,18 @@ const WORD_TRANSLATIONS = {
   you: 'आपको'
 };
 
+function escapeRegex(text) {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+const PHRASE_REPLACEMENTS = Object.entries(PHRASE_TRANSLATIONS)
+  .filter(([phrase]) => phrase && phrase.length > 2 && phrase.includes(' '))
+  .sort((a, b) => b[0].length - a[0].length)
+  .map(([phrase, value]) => ({
+    regex: new RegExp(escapeRegex(phrase), 'gi'),
+    value
+  }));
+
 const nodeOriginalText = new WeakMap();
 let observer = null;
 let animationFrameId = null;
@@ -263,12 +275,8 @@ function translateText(text, language) {
   }
 
   let translated = text;
-  const phraseEntries = Object.entries(PHRASE_TRANSLATIONS)
-    .filter(([phrase]) => phrase && phrase.length > 2 && phrase.includes(' '))
-    .sort((a, b) => b[0].length - a[0].length);
-  phraseEntries.forEach(([phrase, value]) => {
-    const escaped = phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    translated = translated.replace(new RegExp(escaped, 'gi'), value);
+  PHRASE_REPLACEMENTS.forEach(({ regex, value }) => {
+    translated = translated.replace(regex, value);
   });
 
   // Fallback to term-level translation for dynamic strings that are not explicitly mapped.
