@@ -7,7 +7,7 @@ import { auth } from '../firebase';
 
 export default function ProfilePage() {
   const navigate = useNavigate();
-  const { user, setUser, logout } = useApp();
+  const { user, setUser, logout, settings } = useApp();
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({ name: user?.name || '', age: user?.age || '', blood_group: user?.blood_group || '', emergency_contact: user?.emergency_contact || '' });
 
@@ -66,6 +66,12 @@ export default function ProfilePage() {
       { icon: '💊', label: 'Active Role', value: user?.role || 'Patient' },
     ]},
     { label: 'Preferences', items: [
+      { 
+        icon: '🔔', 
+        label: 'Notification Special', 
+        value: settings.selectedVibrationPattern && settings.selectedReminderSound ? 'On' : 'Manage',
+        action: () => navigate('/settings') 
+      },
       { icon: '⚙️', label: 'App Settings', action: () => navigate('/settings') },
     ]},
   ];

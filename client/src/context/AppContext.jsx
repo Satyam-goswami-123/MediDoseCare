@@ -52,8 +52,13 @@ export function AppProvider({ children }) {
       vibration: true,
       softNotifications: true,
       soundEnabled: true,
+      selectedReminderSound: 'https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3',
+      selectedNotificationSound: 'https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3',
+      selectedVibrationPattern: 'standard',
       reminderFrequency: 'standard',
-      autoSync: true
+      autoSync: true,
+      skipAlerts: true,
+      healthTips: true
     };
   });
 
@@ -139,6 +144,48 @@ export function AppProvider({ children }) {
     return () => unsubscribe();
   }, []);
 
+  // Reminder Scheduler Logic
+  useEffect(() => {
+    const checkReminders = () => {
+      const now = new Date();
+      const currentTime = now.getHours().toString().padStart(2, '0') + ':' + 
+                          now.getMinutes().toString().padStart(2, '0');
+      
+      // Keep track of reminders fired in the last minute to avoid double triggering
+      // We'll use a ref or state, but for simplicity let's just check the current minute
+      medicines.forEach(med => {
+        if (med.times && med.times.includes(currentTime)) {
+          // Check if we already fired this specific reminder in the last 60 seconds
+          const reminderId = `${med.id}-${currentTime}-${now.toDateString()}`;
+          const firedReminders = JSON.parse(localStorage.getItem('mdc_fired_reminders') || '{}');
+          
+          if (!firedReminders[reminderId]) {
+            // Trigger the reminder!
+            triggerReminder(
+              `Medicine Time: ${med.name}`,
+              `It's time to take ${med.dosage}. Your health comes first!`
+            );
+            
+            // Mark as fired
+            firedReminders[reminderId] = Date.now();
+            // Cleanup old reminders (older than 24h)
+            const oneDayAgo = Date.now() - 86400000;
+            const cleaned = Object.fromEntries(
+              Object.entries(firedReminders).filter(([_, timestamp]) => timestamp > oneDayAgo)
+            );
+            localStorage.setItem('mdc_fired_reminders', JSON.stringify(cleaned));
+          }
+        }
+      });
+    };
+
+    // Run check every 30 seconds for accuracy
+    const timer = setInterval(checkReminders, 30000);
+    checkReminders(); // Initial check
+
+    return () => clearInterval(timer);
+  }, [medicines, settings]); // Re-run if medicines or settings change
+
   const login = (userData, userToken) => {
     // This is now primarily handled by onAuthStateChanged
     setUser(userData);
@@ -186,6 +233,53 @@ export function AppProvider({ children }) {
     setNotifications((prev) => prev.map((n) => n.id === id ? { ...n, is_read: 1 } : n));
   };
 
+  const triggerReminder = (title, message) => {
+    // Soft Notification (using Browser Notification API if permitted)
+    if (settings.softNotifications && "Notification" in window) {
+      if (Notification.permission === "granted") {
+        new Notification(title, { body: message, icon: '/logo192.png' });
+      } else if (Notification.permission !== "denied") {
+        Notification.requestPermission();
+      }
+    }
+
+    // Vibration
+    if (settings.vibration && "vibrate" in navigator) {
+      const patterns = {
+        standard: [200, 100, 200],
+        heartbeat: [100, 100, 100, 300, 100, 100, 100],
+        zigzag: [50, 100, 50, 100, 50, 100, 50],
+        heavy: [500, 100, 500],
+        rapid: [100, 50, 100, 50, 100, 50, 100]
+      };
+      window.navigator.vibrate(patterns[settings.selectedVibrationPattern] || patterns.standard);
+    }
+
+    // Sound (Soft alert)
+    if (settings.soundEnabled) {
+      const soundUrl = settings.selectedReminderSound || 'https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3';
+      const audio = new Audio(soundUrl);
+      audio.volume = 0.4;
+      audio.play().catch(e => console.log('Audio play failed', e));
+    }
+
+    // Add to notification list
+    setNotifications(prev => [{
+      id: Date.now(),
+      title,
+      message,
+      type: 'reminder',
+      is_read: 0,
+      created_at: new Date().toISOString()
+    }, ...prev]);
+  };
+
+  const updateSettings = (newSettings) => {
+    const updated = { ...settings, ...newSettings };
+    setSettings(updated);
+    localStorage.setItem('mdc_settings', JSON.stringify(updated));
+  };
+
   const unreadCount = notifications.filter((n) => !n.is_read).length;
 
   return (
@@ -198,43 +292,8 @@ export function AppProvider({ children }) {
       },
       setUser,
       settings,
-      updateSettings: (newSettings) => {
-        const updated = { ...settings, ...newSettings };
-        setSettings(updated);
-        localStorage.setItem('mdc_settings', JSON.stringify(updated));
-      },
-      triggerReminder: (title, message) => {
-        // Soft Notification (using Browser Notification API if permitted)
-        if (settings.softNotifications && "Notification" in window) {
-          if (Notification.permission === "granted") {
-            new Notification(title, { body: message, icon: '/logo192.png' });
-          } else if (Notification.permission !== "denied") {
-            Notification.requestPermission();
-          }
-        }
-
-        // Vibration
-        if (settings.vibration && "vibrate" in navigator) {
-          window.navigator.vibrate([200, 100, 200]);
-        }
-
-        // Sound (Soft alert)
-        if (settings.soundEnabled) {
-          const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3');
-          audio.volume = 0.4;
-          audio.play().catch(e => console.log('Audio play failed', e));
-        }
-
-        // Add to notification list
-        setNotifications(prev => [{
-          id: Date.now(),
-          title,
-          message,
-          type: 'reminder',
-          is_read: 0,
-          created_at: new Date().toISOString()
-        }, ...prev]);
-      }
+      updateSettings,
+      triggerReminder
     }}>
       {children}
     </AppContext.Provider>
