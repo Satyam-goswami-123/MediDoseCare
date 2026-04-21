@@ -80,7 +80,7 @@ export function AppProvider({ children }) {
         const storedProfile = getStoredProfiles()[firebaseUser.uid] || {};
         const name = firebaseUser.displayName || storedProfile.name || 'User';
         const email = firebaseUser.email || storedProfile.email || null;
-        const phone = firebaseUser.phoneNumber || fallbackPhone || storedProfile.phone || null;
+        const phone = firebaseUser.phoneNumber || storedProfile.phone || fallbackPhone || null;
 
         upsertStoredProfile(firebaseUser.uid, { name, email, phone });
 
