@@ -2,6 +2,7 @@ const db = require('../config/db');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
+const Medicine = require('../models/Medicine');
 
 const otpStore = new Map(); // In-memory OTP store (use Redis in production)
 const OTP_EXPIRY_MS = 5 * 60 * 1000;
@@ -156,22 +157,35 @@ const verifyOtp = async (req, res) => {
       return res.status(401).json({ error: check.error });
     }
 
+    // Check if user exists in DB
+    let [rows] = await db.query('SELECT * FROM users WHERE email = ?', [normalizedEmail]);
+    let user = rows[0];
+
+    if (!user) {
+      // Create new user if they don't exist
+      const userName = name || (normalizedEmail.split('@')[0] || 'User').trim();
+
+      // Generate Unique ID (Readable)
+      const prefix = 'MDC-P';
+      const [countRow] = await db.query('SELECT COUNT(*) as count FROM users WHERE role = "patient"');
+      const nextId = (countRow[0].count + 1).toString().padStart(3, '0');
+      const uniqueId = `${prefix}-${nextId}`;
+
+      const [result] = await db.query(
+        'INSERT INTO users (unique_id, name, email, role) VALUES (?, ?, ?, ?)',
+        [uniqueId, userName, normalizedEmail, 'patient']
+      );
+      [rows] = await db.query('SELECT * FROM users WHERE id = ?', [result.insertId]);
+      user = rows[0];
+    }
+
     const token = jwt.sign(
-      { email: normalizedEmail, authType: 'email-otp' },
+      { id: user.id, email: user.email, role: user.role },
       process.env.JWT_SECRET || 'medidose_secret',
       { expiresIn: '30d' }
     );
 
-    const userName = (normalizedEmail.split('@')[0] || 'User').trim();
-    return res.json({
-      token,
-      user: {
-        id: `email:${normalizedEmail}`,
-        name: userName,
-        email: normalizedEmail,
-        role: 'patient',
-      },
-    });
+    return res.json({ token, user });
   }
 
   if (!phone) return res.status(400).json({ error: 'Phone number required' });
@@ -184,9 +198,15 @@ const verifyOtp = async (req, res) => {
   let user = rows[0];
 
   if (!user) {
+    // Generate Unique ID
+    const prefix = 'MDC-P';
+    const [countRow] = await db.query('SELECT COUNT(*) as count FROM users WHERE role = "patient"');
+    const nextId = (countRow[0].count + 1).toString().padStart(3, '0');
+    const uniqueId = `${prefix}-${nextId}`;
+
     const [result] = await db.query(
-      'INSERT INTO users (name, phone, role) VALUES (?, ?, ?)',
-      [name || 'User', phone, 'patient']
+      'INSERT INTO users (unique_id, name, phone, role) VALUES (?, ?, ?, ?)',
+      [uniqueId, name || 'User', phone, 'patient']
     );
     [rows] = await db.query('SELECT * FROM users WHERE id = ?', [result.insertId]);
     user = rows[0];
@@ -196,4 +216,156 @@ const verifyOtp = async (req, res) => {
   res.json({ token, user });
 };
 
-module.exports = { sendOtp, verifyOtp };
+const signup = async (req, res) => {
+  const { uid, name, phone, email, role, specialization, hospitalName } = req.body;
+
+  try {
+    // Check if user already exists
+    const [existing] = await db.query('SELECT * FROM users WHERE phone = ? OR email = ?', [phone, email]);
+    if (existing.length > 0) {
+      return res.status(400).json({ error: 'User already exists' });
+    }
+
+    let prefix = 'MDC-U';
+    if (role === 'doctor') prefix = 'MDC-D';
+    else if (role === 'patient') prefix = 'MDC-P';
+    else if (role === 'caregiver') prefix = 'MDC-C';
+
+    const [countRow] = await db.query('SELECT COUNT(*) as count FROM users WHERE role = ?', [role]);
+    const nextId = (countRow[0].count + 1).toString().padStart(3, '0');
+    const uniqueId = `${prefix}-${nextId}`;
+
+    // Insert User
+    const [result] = await db.query(
+      'INSERT INTO users (unique_id, name, phone, email, role) VALUES (?, ?, ?, ?, ?)',
+      [uniqueId, name, phone, email, role]
+    );
+
+    const userId = result.insertId;
+
+    // If doctor, insert details
+    if (role === 'doctor') {
+      await db.query(
+        'INSERT INTO doctor_details (user_id, specialization, hospital_name) VALUES (?, ?, ?)',
+        [userId, specialization, hospitalName]
+      );
+    }
+
+    res.status(201).json({ message: 'User registered successfully', uniqueId });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+const login = async (req, res) => {
+  const { email, role } = req.body; // In a real app, verify Firebase token or password here
+
+  try {
+    const [rows] = await db.query('SELECT * FROM users WHERE email = ? AND role = ?', [email, role]);
+    const user = rows[0];
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const token = jwt.sign(
+      { id: user.id, role: user.role },
+      process.env.JWT_SECRET || 'medidose_secret',
+      { expiresIn: '30d' }
+    );
+
+    res.json({ token, user });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+const socialLogin = async (req, res) => {
+  const { email, name, phone, uid, role = 'patient' } = req.body;
+
+  try {
+    const normalizedEmail = email ? email.toLowerCase().trim() : null;
+    let user = null;
+
+    // 1. Try to find user by firebase_uid (Most Stable)
+    if (uid) {
+      const [uidRows] = await db.query('SELECT * FROM users WHERE firebase_uid = ?', [uid]);
+      user = uidRows[0] || null;
+    }
+
+    // 2. Try to find user by email (Backup)
+    if (!user && normalizedEmail) {
+      const [rows] = await db.query('SELECT * FROM users WHERE email = ?', [normalizedEmail]);
+      user = rows[0] || null;
+      
+      // If found by email but uid is missing, link the uid now
+      if (user && uid && !user.firebase_uid) {
+        await db.query('UPDATE users SET firebase_uid = ? WHERE id = ?', [uid, user.id]);
+        user.firebase_uid = uid;
+      }
+    }
+
+    // 3. Try to find by Phone if provided
+    if (!user && phone) {
+      const [phoneRows] = await db.query('SELECT * FROM users WHERE phone = ?', [phone]);
+      user = phoneRows[0] || null;
+    }
+
+    // 4. Try to find by Name as a last resort
+    if (!user && name) {
+      const [nameRows] = await db.query('SELECT * FROM users WHERE name = ?', [name]);
+      user = nameRows[0] || null;
+    }
+
+    if (user) {
+      // Update missing fields on existing user
+      const updates = [];
+      const vals = [];
+      if (normalizedEmail && !user.email) { updates.push('email=?'); vals.push(normalizedEmail); }
+      if (name && !user.name) { updates.push('name=?'); vals.push(name); }
+      if (updates.length > 0) {
+        vals.push(user.id);
+        await db.query(`UPDATE users SET ${updates.join(',')} WHERE id=?`, vals);
+        // Re-fetch updated user
+        const [refreshed] = await db.query('SELECT * FROM users WHERE id = ?', [user.id]);
+        user = refreshed[0];
+      }
+    } else {
+      // Create new user — phone is now optional in DB
+      const [countRow] = await db.query('SELECT COUNT(*) as count FROM users WHERE role = ?', [role]);
+      const nextId = (countRow[0].count + 1).toString().padStart(3, '0');
+      const prefix = role === 'doctor' ? 'MDC-D' : 'MDC-P';
+      const uniqueId = `${prefix}-${nextId}`;
+
+      const [result] = await db.query(
+        'INSERT INTO users (unique_id, name, email, phone, role) VALUES (?, ?, ?, ?, ?)',
+        [uniqueId, name || 'User', normalizedEmail || null, phone || null, role]
+      );
+      const [newUser] = await db.query('SELECT * FROM users WHERE id = ?', [result.insertId]);
+      user = newUser[0];
+    }
+
+    // 4. ACCOUNT RECLAMATION: Automatically merge data from older accounts
+    // If this is a new Gmail login but there are medicines under the same Name,
+    // we move them to this new authenticated account immediately.
+    if (user.name) {
+      const reclaimedCount = await Medicine.reclaimMedicinesByName(user.name, user.id);
+      if (reclaimedCount > 0) {
+        console.log(`[Sync] Successfully reclaimed ${reclaimedCount} medicines for User: ${user.name} (ID: ${user.id})`);
+      }
+    }
+
+    const token = jwt.sign(
+      { id: user.id, email: user.email, role: user.role },
+      process.env.JWT_SECRET || 'medidose_secret',
+      { expiresIn: '30d' }
+    );
+
+    res.json({ token, user });
+  } catch (err) {
+    console.error('socialLogin error:', err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+module.exports = { sendOtp, verifyOtp, signup, login, socialLogin };

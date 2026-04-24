@@ -39,6 +39,14 @@ export default function CareNetworkPage() {
                   <div style={{ display: 'flex', gap: 8 }}>
                     <button style={{ width: 34, height: 34, borderRadius: 'var(--radius-sm)', background: 'var(--green-dim)', border: 'none', cursor: 'pointer', fontSize: 16 }}>💬</button>
                     <button style={{ width: 34, height: 34, borderRadius: 'var(--radius-sm)', background: 'var(--blue-dim)', border: 'none', cursor: 'pointer', fontSize: 16 }}>📞</button>
+                    {role === 'doctor' && (
+                      <button 
+                        style={{ height: 34, padding: '0 12px', borderRadius: 'var(--radius-sm)', background: 'var(--blue)', color: 'white', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600 }}
+                        onClick={() => alert(`Booking appointment with ${m.name}`)}
+                      >
+                        Book
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}

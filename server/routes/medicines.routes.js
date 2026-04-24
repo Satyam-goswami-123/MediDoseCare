@@ -9,6 +9,7 @@ router.get('/logs', ctrl.getDoseLogs);
 router.get('/:id', ctrl.getOne);
 router.put('/:id', ctrl.update);
 router.delete('/:id', ctrl.remove);
+router.post('/sync', ctrl.syncOldMedicines);
 router.patch('/logs/:logId', ctrl.updateDose);
 
 module.exports = router;

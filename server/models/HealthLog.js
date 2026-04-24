@@ -1,9 +1,11 @@
 const db = require('../config/db');
 
 const getHealthLogs = async (userId, limit = 10) => {
+  // Use a sanitized integer to prevent SQL quoting issues in the LIMIT clause
+  const safeLimit = Math.max(1, parseInt(limit, 10) || 10);
   const [rows] = await db.query(
-    'SELECT * FROM health_logs WHERE user_id = ? ORDER BY recorded_at DESC LIMIT ?',
-    [userId, limit]
+    `SELECT * FROM health_logs WHERE user_id = ? ORDER BY recorded_at DESC LIMIT ${safeLimit}`,
+    [userId]
   );
   return rows;
 };

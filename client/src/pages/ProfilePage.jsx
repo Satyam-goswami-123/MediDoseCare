@@ -59,21 +59,25 @@ export default function ProfilePage() {
   };
 
   const sections = [
-    { label: 'Medical Info', items: [
-      { icon: '🩸', label: 'Blood Group', value: user?.blood_group || null },
-      { icon: '🎂', label: 'Age', value: user?.age ? `${user.age} years` : null },
-      { icon: '📞', label: 'Emergency Contact', value: user?.emergency_contact || null },
-      { icon: '💊', label: 'Active Role', value: user?.role || 'Patient' },
-    ]},
-    { label: 'Preferences', items: [
-      { 
-        icon: '🔔', 
-        label: 'Notification Special', 
-        value: settings.selectedVibrationPattern && settings.selectedReminderSound ? 'On' : 'Manage',
-        action: () => navigate('/settings') 
-      },
-      { icon: '⚙️', label: 'App Settings', action: () => navigate('/settings') },
-    ]},
+    {
+      label: 'Medical Info', items: [
+        { icon: '🩸', label: 'Blood Group', value: user?.blood_group || null },
+        { icon: '🎂', label: 'Age', value: user?.age ? `${user.age} years` : null },
+        { icon: '📞', label: 'Emergency Contact', value: user?.emergency_contact || null },
+        { icon: '💊', label: 'Active Role', value: user?.role || 'Patient' },
+      ]
+    },
+    {
+      label: 'Preferences', items: [
+        {
+          icon: '🔔',
+          label: 'Notification Special',
+          value: settings?.selectedVibrationPattern && settings?.selectedReminderSound ? 'On' : 'Manage',
+          action: () => navigate('/settings')
+        },
+        { icon: '⚙️', label: 'App Settings', action: () => navigate('/settings') },
+      ]
+    },
   ];
 
   return (

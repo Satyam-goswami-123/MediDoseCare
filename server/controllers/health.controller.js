@@ -2,7 +2,8 @@ const Health = require('../models/HealthLog');
 
 const getLogs = async (req, res) => {
   try {
-    const logs = await Health.getHealthLogs(req.user.id, req.query.limit || 10);
+    const limit = parseInt(req.query.limit, 10) || 10;
+    const logs = await Health.getHealthLogs(req.user.id, limit);
     res.json(logs);
   } catch (err) { res.status(500).json({ error: err.message }); }
 };

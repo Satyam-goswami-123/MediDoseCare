@@ -18,9 +18,14 @@ api.interceptors.response.use(
 
 export const authApi = {
   sendOtp: (phone) => api.post('/auth/send-otp', { phone }),
-  verifyOtp: (phone, otp, name) => api.post('/auth/verify-otp', { phone, otp, name }),
+  verifyOtp: (phone, otp, name, role, specialization, hospitalName) =>
+    api.post('/auth/verify-otp', { phone, otp, name, role, specialization, hospitalName }),
   sendEmailOtp: (email) => api.post('/auth/send-otp', { email }),
-  verifyEmailOtp: (email, otp, name) => api.post('/auth/verify-otp', { email, otp, name }),
+  verifyEmailOtp: (email, otp, name, role, specialization, hospitalName) =>
+    api.post('/auth/verify-otp', { email, otp, name, role, specialization, hospitalName }),
+  signup: (data) => api.post('/auth/signup', data),
+  login: (data) => api.post('/auth/login', data),
+  socialLogin: (data) => api.post('/auth/social-login', data),
 };
 
 export const medicinesApi = {

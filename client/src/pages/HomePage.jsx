@@ -143,12 +143,12 @@ export default function HomePage() {
               <button style={{ fontSize: 13, color: 'var(--blue)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }} onClick={() => navigate('/health')}>View All</button>
             </div>
             <div className="vitals-row">
-              <VitalCard icon={<Activity size={24} />} label="Blood Pressure" value={`${latest.systolic || 128}/${latest.diastolic || 82}`} unit="mmHg" color="var(--red)" onClick={() => navigate('/health/bp')} />
-              <VitalCard icon={<HeartPulse size={24} />} label="Blood Sugar" value={latest.blood_sugar || 118} unit="mg/dL" color="var(--amber)" onClick={() => navigate('/health/sugar')} />
+              <VitalCard icon={<Activity size={24} />} label="Blood Pressure" value={latest.systolic ? `${latest.systolic}/${latest.diastolic}` : '--/--'} unit="mmHg" color="var(--red)" onClick={() => navigate('/health/bp')} />
+              <VitalCard icon={<HeartPulse size={24} />} label="Blood Sugar" value={latest.blood_sugar || '--'} unit="mg/dL" color="var(--amber)" onClick={() => navigate('/health/sugar')} />
             </div>
             <div className="vitals-row" style={{ marginTop: 12 }}>
-              <VitalCard icon={<Heart size={24} />} label="Heart Rate" value={latest.heart_rate || 74} unit="bpm" color="var(--red)" onClick={() => navigate('/health/heartrate')} />
-              <VitalCard icon={<Wind size={24} />} label="SpO₂" value={latest.spo2 || 98} unit="%" color="var(--blue)" onClick={() => navigate('/health/spo2')} />
+              <VitalCard icon={<Heart size={24} />} label="Heart Rate" value={latest.heart_rate || '--'} unit="bpm" color="var(--red)" onClick={() => navigate('/health/heartrate')} />
+              <VitalCard icon={<Wind size={24} />} label="SpO₂" value={latest.spo2 || '--'} unit="%" color="var(--blue)" onClick={() => navigate('/health/spo2')} />
             </div>
           </div>
         </div>

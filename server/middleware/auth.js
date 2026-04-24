@@ -11,7 +11,11 @@ const authMiddleware = (req, res, next) => {
     req.user = decoded;
     next();
   } catch (err) {
-    res.status(401).json({ error: 'Invalid or expired token' });
+    console.error('Auth Error:', err.message);
+    if (err.name === 'JsonWebTokenError') {
+      return res.status(401).json({ error: 'Invalid token. Please log out and in again.' });
+    }
+    res.status(401).json({ error: 'Session expired. Please log in again.' });
   }
 };
 

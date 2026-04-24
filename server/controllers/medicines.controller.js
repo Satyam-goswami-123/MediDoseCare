@@ -2,9 +2,14 @@ const Medicine = require('../models/Medicine');
 
 const getAll = async (req, res) => {
   try {
+    console.log('Fetching medicines for User ID:', req.user.id);
     const medicines = await Medicine.getMedicinesByUser(req.user.id);
+    console.log(`Found ${medicines.length} medicines for user ${req.user.id}`);
     res.json(medicines);
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { 
+    console.error('Error in getAll medicines:', err);
+    res.status(500).json({ error: err.message }); 
+  }
 };
 
 const getOne = async (req, res) => {
@@ -50,4 +55,16 @@ const updateDose = async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 };
 
-module.exports = { getAll, getOne, create, update, remove, getDoseLogs, updateDose };
+const syncOldMedicines = async (req, res) => {
+  try {
+    const { name } = req.body;
+    if (!name) return res.status(400).json({ error: 'Name is required' });
+    
+    // Find all medicines that belong to a user with this name
+    // and update them to the current user's ID
+    const count = await Medicine.reclaimMedicinesByName(name, req.user.id);
+    res.json({ message: `Successfully synced ${count} medicines` });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+};
+
+module.exports = { getAll, getOne, create, update, remove, getDoseLogs, updateDose, syncOldMedicines };

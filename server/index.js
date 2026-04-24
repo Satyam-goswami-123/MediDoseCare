@@ -31,4 +31,15 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: err.message || 'Internal server error' });
 });
 
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+const db = require('./config/db');
+
+app.listen(PORT, async () => {
+  console.log(`Server running on port ${PORT}`);
+  try {
+    await db.query('SELECT 1');
+    console.log('Database connected successfully! ✅');
+  } catch (err) {
+    console.error('Database connection failed! ❌');
+    console.error(err.message);
+  }
+});

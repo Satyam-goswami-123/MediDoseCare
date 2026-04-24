@@ -24,13 +24,19 @@ import MedHistoryPage from './pages/MedHistoryPage';
 import AiCoachPage from './pages/AiCoachPage';
 import AchievementsPage from './pages/AchievementsPage';
 import SettingsPage from './pages/SettingsPage';
+import DoctorDashboardPage from './pages/DoctorDashboardPage';
 import BottomNav from './components/BottomNav';
 import GlobalHeader from './components/GlobalHeader';
+import ReminderModal from './components/ReminderModal';
 
 function AppShell() {
   const { pathname } = useLocation();
-  const { loading, user } = useApp();
-  const showNav = ['/home', '/medicines', '/health', '/prescriptions', '/profile', '/notifications', '/settings'].some(p => pathname.startsWith(p));
+  const { loading, user, activeReminder, setActiveReminder, markDose, snoozeMedicine } = useApp();
+  
+  const isDoctor = user?.role === 'doctor';
+  
+  const showNav = !isDoctor && ['/home', '/medicines', '/health', '/prescriptions', '/profile', '/notifications', '/settings'].some(p => pathname.startsWith(p));
+  const showDoctorNav = isDoctor && ['/doctor/dashboard', '/profile', '/notifications', '/settings'].some(p => pathname.startsWith(p));
 
   if (loading) {
     return (
@@ -44,7 +50,7 @@ function AppShell() {
 
   return (
     <div className="app-frame">
-      {showNav && <GlobalHeader />}
+      {(showNav || showDoctorNav) && <GlobalHeader />}
       <div className="app-content">
         <div className="content-wrap">
           <Routes>
@@ -53,6 +59,8 @@ function AppShell() {
             <Route path="/onboarding/2" element={<Onboarding2Page />} />
             <Route path="/onboarding/3" element={<Onboarding3Page />} />
             <Route path="/login" element={<LoginPage />} />
+            
+            {/* Patient Routes */}
             <Route path="/home" element={<HomePage />} />
             <Route path="/medicines" element={<MedicineListPage />} />
             <Route path="/medicines/add" element={<AddMedicinePage />} />
@@ -63,17 +71,32 @@ function AppShell() {
             <Route path="/prescriptions/:id" element={<ViewPrescriptionPage />} />
             <Route path="/sos" element={<SosPage />} />
             <Route path="/care-network" element={<CareNetworkPage />} />
+            
+            {/* Doctor Routes */}
+            <Route path="/doctor/dashboard" element={<DoctorDashboardPage />} />
+            
+            {/* Shared Routes */}
             <Route path="/notifications" element={<NotificationsPage />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/history" element={<MedHistoryPage />} />
             <Route path="/ai-coach" element={<AiCoachPage />} />
             <Route path="/achievements" element={<AchievementsPage />} />
             <Route path="/settings" element={<SettingsPage />} />
+            
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </div>
       </div>
       {showNav && <BottomNav />}
+      
+      {activeReminder && (
+        <ReminderModal 
+          medicine={activeReminder}
+          onTake={() => markDose(activeReminder.id, 'taken')}
+          onSnooze={(mins) => snoozeMedicine(activeReminder, mins)}
+          onClose={() => setActiveReminder(null)}
+        />
+      )}
     </div>
   );
 }

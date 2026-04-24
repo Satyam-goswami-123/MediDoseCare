@@ -52,6 +52,7 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const { login } = useApp();
   const [mode, setMode] = useState('choice'); // choice, email, phone, signup
+  const [userRole, setUserRole] = useState('patient'); // patient, doctor
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -62,6 +63,8 @@ export default function LoginPage() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [contactNumber, setContactNumber] = useState('');
+  const [specialization, setSpecialization] = useState('');
+  const [hospitalName, setHospitalName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [phone, setPhone] = useState('');
   const [otpEmail, setOtpEmail] = useState('');
@@ -107,15 +110,39 @@ export default function LoginPage() {
       if (isSignup) {
         const userCredential = await createUserWithEmailAndPassword(auth, normalizedEmail, normalizedPassword);
         await updateProfile(userCredential.user, { displayName: `${firstName} ${lastName}`.trim() });
+        
+        // Also call our backend to save the user with role and doctor info
+        await authApi.signup({
+          uid: userCredential.user.uid,
+          email: normalizedEmail,
+          name: `${firstName} ${lastName}`.trim(),
+          phone: contactNumber,
+          role: userRole,
+          specialization: userRole === 'doctor' ? specialization : null,
+          hospitalName: userRole === 'doctor' ? hospitalName : null
+        });
+
         localStorage.setItem('mdc_signup_phone', `${DEFAULT_COUNTRY_CODE}${contactNumber}`);
         saveSignupProfile({ uid: userCredential.user.uid, firstName, lastName, email: normalizedEmail });
         await signOut(auth);
         setMode('email');
         setPassword('');
-        setSuccess('Registration successful. Please login with Email/Password or Email OTP.');
+        setSuccess('Registration successful. Please login with Email/Password.');
       } else {
-        await signInWithEmailAndPassword(auth, normalizedEmail, normalizedPassword);
-        navigate('/home');
+        const userCredential = await signInWithEmailAndPassword(auth, normalizedEmail, normalizedPassword);
+        // After firebase login, we check the role from our backend or localStorage
+        // For now, let's assume login() updates the context which we'll use for routing
+        // In a real app, you'd fetch the user profile here
+        
+        const response = await authApi.socialLogin({
+          email: userCredential.user.email,
+          name: userCredential.user.displayName,
+          uid: userCredential.user.uid,
+          role: userRole
+        });
+        
+        login(response.user, response.token);
+        navigate(userRole === 'doctor' ? '/doctor/dashboard' : '/home');
       }
     } catch (err) {
       setError(toFirebaseMessage(err));
@@ -244,6 +271,28 @@ export default function LoginPage() {
       <div className="slide-up">
         {mode === 'choice' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div className="card" style={{ padding: 16, marginBottom: 8, background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
+              <p style={{ fontSize: 13, fontWeight: 600, marginBottom: 12, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Login As</p>
+              <div style={{ display: 'flex', gap: 12 }}>
+                <button 
+                  className={`btn ${userRole === 'patient' ? 'btn-primary' : 'btn-ghost'}`} 
+                  style={{ flex: 1, height: 80, flexDirection: 'column', gap: 4 }}
+                  onClick={() => setUserRole('patient')}
+                >
+                  <span style={{ fontSize: 24 }}>👤</span>
+                  <span style={{ fontSize: 13 }}>Patient</span>
+                </button>
+                <button 
+                  className={`btn ${userRole === 'doctor' ? 'btn-primary' : 'btn-ghost'}`} 
+                  style={{ flex: 1, height: 80, flexDirection: 'column', gap: 4 }}
+                  onClick={() => setUserRole('doctor')}
+                >
+                  <span style={{ fontSize: 24 }}>👨‍⚕️</span>
+                  <span style={{ fontSize: 13 }}>Doctor</span>
+                </button>
+              </div>
+            </div>
+            
             <button className="btn btn-primary btn-full" onClick={handleGoogleLogin} disabled={loading} style={{ background: '#fff', color: '#111', gap: 12 }}>
               <Chrome size={20} /> Continue with Google
             </button>
@@ -271,13 +320,15 @@ export default function LoginPage() {
             <h3 style={{ marginBottom: 20 }}>{mode === 'signup' ? 'Create Account' : 'Welcome Back'}</h3>
             {mode === 'signup' && (
               <>
-                <div className="input-group">
-                  <label className="input-label">First Name</label>
-                  <input className="input" type="text" placeholder="Enter first name" value={firstName} onChange={e => setFirstName(e.target.value)} />
-                </div>
-                <div className="input-group">
-                  <label className="input-label">Last Name</label>
-                  <input className="input" type="text" placeholder="Enter last name" value={lastName} onChange={e => setLastName(e.target.value)} />
+                <div style={{ display: 'flex', gap: 12 }}>
+                  <div className="input-group" style={{ flex: 1 }}>
+                    <label className="input-label">First Name</label>
+                    <input className="input" type="text" placeholder="Enter first name" value={firstName} onChange={e => setFirstName(e.target.value)} />
+                  </div>
+                  <div className="input-group" style={{ flex: 1 }}>
+                    <label className="input-label">Last Name</label>
+                    <input className="input" type="text" placeholder="Enter last name" value={lastName} onChange={e => setLastName(e.target.value)} />
+                  </div>
                 </div>
                 <div className="input-group">
                   <label className="input-label">Contact Number</label>
@@ -286,6 +337,18 @@ export default function LoginPage() {
                     <input className="input" type="tel" maxLength={DEFAULT_PHONE_DIGITS} placeholder="9876543210" value={contactNumber} onChange={e => setContactNumber(e.target.value.replace(/\D/g, ''))} />
                   </div>
                 </div>
+                {userRole === 'doctor' && (
+                  <>
+                    <div className="input-group">
+                      <label className="input-label">Specialization</label>
+                      <input className="input" type="text" placeholder="e.g. Cardiologist, Diabetologist" value={specialization} onChange={e => setSpecialization(e.target.value)} />
+                    </div>
+                    <div className="input-group">
+                      <label className="input-label">Hospital / Clinic Name</label>
+                      <input className="input" type="text" placeholder="e.g. City Care Hospital" value={hospitalName} onChange={e => setHospitalName(e.target.value)} />
+                    </div>
+                  </>
+                )}
               </>
             )}
             <div className="input-group">
