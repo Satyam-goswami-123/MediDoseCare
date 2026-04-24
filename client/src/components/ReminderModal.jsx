@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Pill, X, Clock, Check, Bell, Volume2 } from 'lucide-react';
+import { Pill, X, Clock, Check, Bell, Volume2, Edit2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export default function ReminderModal({ medicine, onTake, onSnooze, onClose }) {
+  const navigate = useNavigate();
   const [timeLeft, setTimeLeft] = useState(30); // Auto-dismiss or something? Or just show it.
 
   useEffect(() => {
@@ -153,6 +155,28 @@ export default function ReminderModal({ medicine, onTake, onSnooze, onClose }) {
               Dismiss
             </button>
           </div>
+
+          <button 
+            onClick={() => {
+              onClose();
+              navigate(`/medicines/${medicine.id}/edit`);
+            }}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--blue)',
+              fontSize: 14,
+              fontWeight: 600,
+              marginTop: 12,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 6
+            }}
+          >
+            <Edit2 size={16} /> Edit Reminder Settings
+          </button>
         </div>
 
         <div style={{ marginTop: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, color: 'var(--text-muted)', fontSize: 12 }}>

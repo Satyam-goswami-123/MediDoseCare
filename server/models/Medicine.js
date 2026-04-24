@@ -55,6 +55,7 @@ const updateMedicine = async (id, data) => {
   if (data.dosage) { fields.push('dosage=?'); values.push(data.dosage); }
   if (data.frequency) { fields.push('frequency=?'); values.push(data.frequency); }
   if (data.times) { fields.push('times=?'); values.push(JSON.stringify(data.times)); }
+  if (data.start_date) { fields.push('start_date=?'); values.push(data.start_date); }
   if (data.end_date !== undefined) { fields.push('end_date=?'); values.push(data.end_date); }
   if (data.instructions !== undefined) { fields.push('instructions=?'); values.push(data.instructions); }
   if (data.color) { fields.push('color=?'); values.push(data.color); }

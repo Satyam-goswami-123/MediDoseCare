@@ -23,6 +23,20 @@ export function AppProvider({ children }) {
   const [prescriptions, setPrescriptions] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [doseHistory, setDoseHistory] = useState([]);
+  const [registeredDoctors, setRegisteredDoctors] = useState([
+    { 
+      id: 101,
+      name: 'Dr. Priya Sharma', 
+      specialty: 'Diabetologist', 
+      hospital: 'Apollo Hospitals', 
+      image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQfhnh1tlasXW18unaAU-rHt8GbVCNxlfGR2w&s',
+      experience: '12 Years',
+      rating: 4.8,
+      fee: 850,
+      slots: ['09:00 AM', '10:00 AM', '11:00 AM', '02:00 PM', '03:00 PM', '05:00 PM']
+    }
+  ]);
+  const [appointments, setAppointments] = useState([]);
   const [streak, setStreak] = useState(0);
   const [achievements] = useState([
     { id: 1, name: 'First Dose', icon: <Pill size={36} />, earned: false },
@@ -216,6 +230,22 @@ export function AppProvider({ children }) {
     } catch (e) { return null; }
   };
 
+  const updateMedicine = async (id, data) => {
+    try {
+      const updated = await medicinesApi.update(id, data);
+      await fetchAllData();
+      return updated;
+    } catch (e) { return null; }
+  };
+
+  const deleteMedicine = async (id) => {
+    try {
+      await medicinesApi.remove(id);
+      await fetchAllData();
+      return true;
+    } catch (e) { return false; }
+  };
+
   const markDose = async (id, status, logId) => {
     // Optimistic UI Update
     setMedicines(prev => prev.map(m => m.id === id ? { ...m, status } : m));
@@ -253,6 +283,19 @@ export function AppProvider({ children }) {
     });
   };
 
+  const bookAppointment = (appointment) => {
+    setAppointments(prev => [...prev, { ...appointment, id: Date.now(), status: 'scheduled' }]);
+  };
+
+  const updateDoctorProfile = (doctorId, data) => {
+    setRegisteredDoctors(prev => prev.map(d => d.id === doctorId ? { ...d, ...data } : d));
+    if (user?.id === doctorId) {
+      const updatedUser = { ...user, ...data };
+      setUser(updatedUser);
+      localStorage.setItem('mdc_user', JSON.stringify(updatedUser));
+    }
+  };
+
   const unreadCount = notifications.filter(n => !n.is_read).length;
 
   return (
@@ -260,7 +303,9 @@ export function AppProvider({ children }) {
       user, setUser, loading, token, medicines, healthLogs, prescriptions, notifications,
       doseHistory, streak, achievements, theme, language, settings, unreadCount,
       activeReminder, setActiveReminder, snoozeMedicine,
-      login, logout, fetchAllData, addMedicine, addHealthLog, addPrescription, markDose, updateSettings,
+      registeredDoctors, appointments,
+      login, logout, fetchAllData, addMedicine, updateMedicine, deleteMedicine, addHealthLog, addPrescription, markDose, updateSettings,
+      bookAppointment, updateDoctorProfile,
       setLanguage, toggleTheme: () => setTheme(prev => prev === 'dark' ? 'light' : 'dark'),
     }}>
       {children}

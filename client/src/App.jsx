@@ -11,6 +11,7 @@ import LoginPage from './pages/LoginPage';
 import HomePage from './pages/HomePage';
 import MedicineListPage from './pages/MedicineListPage';
 import AddMedicinePage from './pages/AddMedicinePage';
+import EditMedicinePage from './pages/EditMedicinePage';
 import ReminderDetailPage from './pages/ReminderDetailPage';
 import HealthDashboardPage from './pages/HealthDashboardPage';
 import VitalsDetailPage from './pages/VitalsDetailPage';
@@ -65,6 +66,7 @@ function AppShell() {
             <Route path="/medicines" element={<MedicineListPage />} />
             <Route path="/medicines/add" element={<AddMedicinePage />} />
             <Route path="/medicines/:id" element={<ReminderDetailPage />} />
+            <Route path="/medicines/:id/edit" element={<EditMedicinePage />} />
             <Route path="/health" element={<HealthDashboardPage />} />
             <Route path="/health/:type" element={<VitalsDetailPage />} />
             <Route path="/prescriptions" element={<PrescriptionsPage />} />

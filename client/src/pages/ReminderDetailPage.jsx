@@ -4,7 +4,7 @@ import { useApp } from '../context/AppContext';
 export default function ReminderDetailPage() {
   const navigate = useNavigate();
   const { id } = useParams();
-  const { medicines, markDose } = useApp();
+  const { medicines, markDose, deleteMedicine } = useApp();
   const med = medicines.find((m) => String(m.id) === id);
 
   if (!med) return (
@@ -27,6 +27,7 @@ export default function ReminderDetailPage() {
         <div className="page-header">
           <button className="back-btn" onClick={() => navigate('/medicines')}>←</button>
           <h2>Reminder Detail</h2>
+          <button className="btn btn-ghost btn-sm" style={{ marginLeft: 'auto', color: 'var(--blue)' }} onClick={() => navigate(`/medicines/${id}/edit`)}>Edit</button>
         </div>
 
         <div style={{ padding: '8px 20px 20px' }}>
@@ -75,7 +76,26 @@ export default function ReminderDetailPage() {
             <button className="btn btn-ghost btn-full" onClick={() => handleMark('upcoming')}>↩ Reset to Upcoming</button>
           )}
           <div className="divider" />
-          <button className="btn btn-ghost btn-full" onClick={() => navigate('/history')}>📊 View Full History</button>
+          <button className="btn btn-ghost btn-full" style={{ marginBottom: 12 }} onClick={() => navigate('/history')}>📊 View Full History</button>
+          
+          <button 
+            className="btn btn-full" 
+            style={{ 
+              background: 'rgba(239,68,68,0.1)', 
+              color: 'var(--red)', 
+              border: '1px solid rgba(239,68,68,0.2)',
+              marginTop: 20
+            }} 
+            onClick={async () => {
+              if (window.confirm('Are you sure you want to delete this medicine?')) {
+                const success = await deleteMedicine(med.id);
+                if (success) navigate('/medicines');
+                else alert('Failed to delete medicine');
+              }
+            }}
+          >
+            🗑️ Delete Medicine
+          </button>
         </div>
       </div>
     </div>
