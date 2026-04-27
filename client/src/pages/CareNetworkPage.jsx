@@ -6,7 +6,7 @@ import { Phone, Video, MessageSquare, Clock, Calendar, ShieldCheck, Star, Credit
 export default function CareNetworkPage() {
   const navigate = useNavigate();
   const { registeredDoctors, bookAppointment, appointments, user } = useApp();
-  
+
   const [bookingDoctor, setBookingDoctor] = useState(null);
   const [bookingStep, setBookingStep] = useState('options'); // 'options', 'slots', 'payment', 'success'
   const [selectedType, setSelectedType] = useState(null);
@@ -76,39 +76,59 @@ export default function CareNetworkPage() {
               </div>
 
               {/* Doctors Section */}
-              <div className="section-label">🩺 Specialist Doctors</div>
+              <div className="section-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span>🩺 Specialist Doctors</span>
+                <span style={{ fontSize: 11, color: 'var(--blue)', fontWeight: 700 }}>VIEW ALL</span>
+              </div>
               {registeredDoctors.map((doc) => (
-                <div key={doc.id} className="card" style={{ marginBottom: 16, padding: 16 }}>
+                <div key={doc.id} className="card" style={{
+                  marginBottom: 16,
+                  padding: 20,
+                  background: 'white',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
+                  border: '1px solid var(--border)',
+                  position: 'relative'
+                }}>
                   <div style={{ display: 'flex', gap: 16 }}>
-                    <img src={doc.image} alt={doc.name} style={{ width: 80, height: 80, borderRadius: 20, objectFit: 'cover' }} />
+                    <div style={{ position: 'relative' }}>
+                      <img src={doc.image} alt={doc.name} style={{ width: 85, height: 85, borderRadius: 24, objectFit: 'cover' }} />
+                      <div style={{ position: 'absolute', bottom: -5, right: -5, width: 22, height: 22, background: 'var(--green)', borderRadius: '50%', border: '3px solid white', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}></div>
+                    </div>
+
                     <div style={{ flex: 1 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                         <div>
-                          <h4 style={{ color: 'var(--text-primary)', marginBottom: 2 }}>{doc.name}</h4>
-                          <p style={{ fontSize: 13, color: 'var(--blue)', fontWeight: 600 }}>{doc.specialty}</p>
+                          <h4 style={{ color: 'var(--text-primary)', marginBottom: 2, fontSize: 17, fontWeight: 800 }}>{doc.name}</h4>
+                          <span style={{ fontSize: 11, color: 'var(--blue)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>{doc.specialty || 'General Physician'}</span>
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'var(--amber-dim)', padding: '2px 8px', borderRadius: 8, color: '#D97706', fontSize: 12, fontWeight: 700 }}>
-                          <Star size={12} fill="#D97706" /> {doc.rating || 5.0}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'var(--amber-dim)', padding: '4px 8px', borderRadius: 10, color: '#D97706', fontSize: 12, fontWeight: 800 }}>
+                          <Star size={13} fill="#D97706" /> {doc.rating || '4.9'}
                         </div>
                       </div>
-                      <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 8, display: 'flex', gap: 12 }}>
-                        <span>Exp: {doc.experience}</span>
-                        <span>•</span>
-                        <span>{doc.hospital}</span>
+
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 12 }}>
+                        <span style={{ fontSize: 11, padding: '4px 8px', background: 'var(--bg-secondary)', borderRadius: 6, color: 'var(--text-muted)' }}>🎓 {doc.qualification || 'MBBS'}</span>
+                        <span style={{ fontSize: 11, padding: '4px 8px', background: 'var(--bg-secondary)', borderRadius: 6, color: 'var(--text-muted)' }}>🕒 {doc.experience} Exp</span>
                       </div>
                     </div>
                   </div>
-                  <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+
+                  <div style={{ marginTop: 20, padding: '12px 16px', background: 'var(--bg-secondary)', borderRadius: 12, display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <Clock size={16} color="var(--blue)" />
+                    <span style={{ fontSize: 12, color: 'var(--text-secondary)', fontWeight: 500 }}>Next available: <strong style={{ color: 'var(--text-primary)' }}>Today, 04:30 PM</strong></span>
+                  </div>
+
+                  <div style={{ marginTop: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
-                      <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Consultation Fee</span>
-                      <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-primary)' }}>₹{doc.fee}</div>
+                      <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600 }}>CONSULTATION FEE</span>
+                      <div style={{ fontSize: 20, fontWeight: 900, color: 'var(--text-primary)' }}>₹{doc.fee}</div>
                     </div>
-                    <button 
-                      className="btn btn-blue" 
-                      style={{ padding: '10px 24px', borderRadius: 12 }}
+                    <button
+                      className="btn btn-primary"
+                      style={{ padding: '12px 28px', borderRadius: 14, fontWeight: 700, background: 'var(--blue)', boxShadow: '0 4px 12px rgba(59,130,246,0.3)' }}
                       onClick={() => handleBooking(doc)}
                     >
-                      Book Appointment
+                      Book Now
                     </button>
                   </div>
                 </div>
@@ -163,10 +183,10 @@ export default function CareNetworkPage() {
                     { type: 'audio', label: 'Voice Call', icon: <Phone size={24} />, desc: 'Standard audio consultation' },
                     { type: 'chat', label: 'Chat Consultation', icon: <MessageSquare size={24} />, desc: 'Message & file sharing' },
                   ].map((opt) => (
-                    <div 
+                    <div
                       key={opt.type}
                       onClick={() => setSelectedType(opt.type)}
-                      style={{ 
+                      style={{
                         padding: 16, borderRadius: 16, border: `2px solid ${selectedType === opt.type ? 'var(--blue)' : 'var(--border)'}`,
                         background: selectedType === opt.type ? 'var(--blue-dim)' : 'var(--bg-card)',
                         display: 'flex', gap: 16, alignItems: 'center', cursor: 'pointer', transition: '0.2s'
@@ -179,8 +199,8 @@ export default function CareNetworkPage() {
                       </div>
                     </div>
                   ))}
-                  <button 
-                    className="btn btn-blue" 
+                  <button
+                    className="btn btn-blue"
                     style={{ marginTop: 20, padding: 16, borderRadius: 16, width: '100%' }}
                     disabled={!selectedType}
                     onClick={() => setBookingStep('slots')}
@@ -199,18 +219,18 @@ export default function CareNetworkPage() {
                       <div key={day} style={{ padding: '10px 20px', borderRadius: 14, background: i === 0 ? 'var(--blue)' : 'var(--bg-card)', color: i === 0 ? 'white' : 'var(--text-primary)', border: '1px solid var(--border)', fontSize: 13, fontWeight: 700 }}>{day}</div>
                     ))}
                   </div>
-                  
+
                   <div className="section-label">Select Time</div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
                     {bookingDoctor.slots.map((slot) => {
                       const isBooked = bookedSlotsByDoc[bookingDoctor.name]?.includes(slot);
                       return (
-                        <button 
+                        <button
                           key={slot}
                           disabled={isBooked}
                           onClick={() => setSelectedSlot(slot)}
-                          style={{ 
-                            padding: '14px 4px', borderRadius: 12, 
+                          style={{
+                            padding: '14px 4px', borderRadius: 12,
                             border: isBooked ? '1px solid var(--border)' : `2px solid ${selectedSlot === slot ? 'var(--blue)' : 'transparent'}`,
                             background: isBooked ? 'var(--bg-page)' : selectedSlot === slot ? 'var(--blue-dim)' : 'var(--bg-card)',
                             color: isBooked ? 'var(--text-muted)' : selectedSlot === slot ? 'var(--blue)' : 'var(--text-primary)',
@@ -228,8 +248,8 @@ export default function CareNetworkPage() {
                     })}
                   </div>
 
-                  <button 
-                    className="btn btn-blue" 
+                  <button
+                    className="btn btn-blue"
                     style={{ marginTop: 32, padding: 16, borderRadius: 16, width: '100%' }}
                     disabled={!selectedSlot}
                     onClick={() => setBookingStep('payment')}
@@ -252,7 +272,7 @@ export default function CareNetworkPage() {
                       <span style={{ fontSize: 18, fontWeight: 800, color: 'var(--blue)' }}>₹{bookingDoctor.fee}</span>
                     </div>
                   </div>
-                  
+
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                     <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-muted)' }}>CHOOSE PAYMENT METHOD</p>
                     {[
@@ -270,8 +290,8 @@ export default function CareNetworkPage() {
                     ))}
                   </div>
 
-                  <button 
-                    className="btn btn-blue" 
+                  <button
+                    className="btn btn-blue"
                     style={{ padding: 16, borderRadius: 16, width: '100%', marginTop: 10 }}
                     onClick={confirmBooking}
                   >
@@ -290,7 +310,7 @@ export default function CareNetworkPage() {
                   <p style={{ color: 'var(--text-secondary)', marginBottom: 32, fontSize: 15, lineHeight: 1.6 }}>
                     Your appointment with <strong>{bookingDoctor.name}</strong> has been scheduled successfully.
                   </p>
-                  
+
                   <div className="card" style={{ padding: 24, background: 'var(--bg-card)', textAlign: 'left', marginBottom: 32, borderLeft: '4px solid var(--blue)' }}>
                     <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
                       <Calendar size={20} color="var(--blue)" />
@@ -315,8 +335,8 @@ export default function CareNetworkPage() {
                     </div>
                   </div>
 
-                  <button 
-                    className="btn btn-blue" 
+                  <button
+                    className="btn btn-blue"
                     style={{ width: '100%', padding: 18, borderRadius: 16, fontSize: 16, fontWeight: 700 }}
                     onClick={closeBooking}
                   >

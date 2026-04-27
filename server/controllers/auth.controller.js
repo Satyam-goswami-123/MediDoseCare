@@ -297,7 +297,7 @@ const socialLogin = async (req, res) => {
     if (!user && normalizedEmail) {
       const [rows] = await db.query('SELECT * FROM users WHERE email = ?', [normalizedEmail]);
       user = rows[0] || null;
-      
+
       // If found by email but uid is missing, link the uid now
       if (user && uid && !user.firebase_uid) {
         await db.query('UPDATE users SET firebase_uid = ? WHERE id = ?', [uid, user.id]);

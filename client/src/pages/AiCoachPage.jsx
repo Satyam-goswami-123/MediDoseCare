@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { Mic, MicOff, Volume2 } from 'lucide-react';
@@ -21,14 +21,15 @@ export default function AiCoachPage() {
   const [isSpeaking, setIsSpeaking] = useState(false);
 
   // Speech Recognition Setup
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  const recognition = SpeechRecognition ? new SpeechRecognition() : null;
-
-  if (recognition) {
-    recognition.continuous = false;
-    recognition.lang = 'en-US';
-    recognition.interimResults = false;
-  }
+  const recognition = useMemo(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) return null;
+    const rec = new SpeechRecognition();
+    rec.continuous = false;
+    rec.lang = 'en-US';
+    rec.interimResults = false;
+    return rec;
+  }, []);
 
   const speak = (text) => {
     if (!window.speechSynthesis) return;
@@ -66,35 +67,62 @@ export default function AiCoachPage() {
     }
 
     if (isListening) {
-      recognition.stop();
+      try {
+        recognition.stop();
+      } catch (e) {
+        console.error("Stop error:", e);
+      }
       setIsListening(false);
     } else {
       setVoiceText('Listening...');
       setIsListening(true);
-      recognition.start();
+      try {
+        recognition.start();
+      } catch (err) {
+        console.error("Start error:", err);
+        setIsListening(false);
+        setVoiceText('Microphone error. Please refresh.');
+      }
     }
   };
 
   useEffect(() => {
     if (!recognition) return;
 
-    recognition.onresult = (event) => {
+    const onResult = (event) => {
       const transcript = event.results[0][0].transcript;
       setVoiceText(transcript);
       setIsListening(false);
       handleVoiceCommand(transcript);
     };
 
-    recognition.onerror = (event) => {
+    const onError = (event) => {
       console.error("Speech recognition error:", event.error);
       setIsListening(false);
-      setVoiceText('Error hearing you. Try again.');
+      if (event.error === 'not-allowed') {
+        setVoiceText('Microphone access denied.');
+      } else if (event.error === 'no-speech') {
+        setVoiceText('No speech detected. Try again.');
+      } else {
+        setVoiceText('Error hearing you. Try again.');
+      }
     };
 
-    recognition.onend = () => {
+    const onEnd = () => {
       setIsListening(false);
     };
-  }, [recognition]);
+
+    recognition.addEventListener('result', onResult);
+    recognition.addEventListener('error', onError);
+    recognition.addEventListener('end', onEnd);
+
+    return () => {
+      recognition.removeEventListener('result', onResult);
+      recognition.removeEventListener('error', onError);
+      recognition.removeEventListener('end', onEnd);
+      recognition.stop();
+    };
+  }, [recognition, medicines, user, latest]);
 
   return (
     <div className="page-enter">

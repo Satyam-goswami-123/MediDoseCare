@@ -64,10 +64,10 @@ export default function HomePage() {
     const scroll = () => {
       if (!isPaused) {
         slider.scrollLeft += speed;
-        
+
         // Loop back to start (we have 3 sets of insights)
         // Insights array length is 5. Single set width is 5 * (260 + 16) = 1380
-        const setWidth = 1380; 
+        const setWidth = 1380;
         if (slider.scrollLeft >= setWidth * 2) {
           slider.scrollLeft -= setWidth;
         }
@@ -259,11 +259,11 @@ export default function HomePage() {
                 -webkit-overflow-scrolling: touch;
               }
             `}</style>
-            <div 
-              className="insights-slider" 
+            <div
+              className="insights-slider"
               ref={insightRef}
-              onMouseEnter={() => {}} // We'll handle pause in useEffect
-              onMouseLeave={() => {}}
+              onMouseEnter={() => { }} // We'll handle pause in useEffect
+              onMouseLeave={() => { }}
             >
               {[...insights, ...insights, ...insights].map((insight, i) => (
                 <div key={i} style={{

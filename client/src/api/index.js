@@ -61,9 +61,16 @@ export const sosApi = {
   trigger: (location) => api.post('/sos/trigger', { location }),
 };
 
+export const appointmentsApi = {
+  getAll: () => api.get('/appointments'),
+  create: (data) => api.post('/appointments', data),
+  updateStatus: (id, status) => api.patch(`/appointments/${id}/status`, { status }),
+};
+
 export const usersApi = {
   getProfile: () => api.get('/users/profile'),
   updateProfile: (data) => api.put('/users/profile', data),
+  updateDoctorDetails: (data) => api.put('/users/doctor-details', data),
 };
 
 export default api;

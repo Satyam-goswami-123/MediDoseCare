@@ -3,14 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { authApi } from '../api';
 import { auth, googleProvider } from '../firebase';
-import { 
-  signInWithPopup, 
-  signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword, 
+import {
+  signInWithPopup,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
   updateProfile,
   signOut,
-  signInWithPhoneNumber, 
-  RecaptchaVerifier 
+  signInWithPhoneNumber,
+  RecaptchaVerifier
 } from 'firebase/auth';
 import { Mail, Phone, Chrome, ChevronLeft, Eye, EyeOff } from 'lucide-react';
 
@@ -56,7 +56,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  
+
   // Form States
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -73,7 +73,7 @@ export default function LoginPage() {
   const [otp, setOtp] = useState(['', '', '', '', '', '']); // Firebase uses 6 digits
   const [step, setStep] = useState('input'); // input, verify
   const [confirmationResult, setConfirmationResult] = useState(null);
-  
+
   const otpRefs = [useRef(), useRef(), useRef(), useRef(), useRef(), useRef()];
 
   // Google Login
@@ -110,7 +110,7 @@ export default function LoginPage() {
       if (isSignup) {
         const userCredential = await createUserWithEmailAndPassword(auth, normalizedEmail, normalizedPassword);
         await updateProfile(userCredential.user, { displayName: `${firstName} ${lastName}`.trim() });
-        
+
         // Also call our backend to save the user with role and doctor info
         await authApi.signup({
           uid: userCredential.user.uid,
@@ -133,14 +133,14 @@ export default function LoginPage() {
         // After firebase login, we check the role from our backend or localStorage
         // For now, let's assume login() updates the context which we'll use for routing
         // In a real app, you'd fetch the user profile here
-        
+
         const response = await authApi.socialLogin({
           email: userCredential.user.email,
           name: userCredential.user.displayName,
           uid: userCredential.user.uid,
           role: userRole
         });
-        
+
         login(response.user, response.token);
         navigate(userRole === 'doctor' ? '/doctor/dashboard' : '/home');
       }
@@ -250,7 +250,7 @@ export default function LoginPage() {
   return (
     <div className="page-enter" style={{ padding: 24, justifyContent: 'center' }}>
       <div id="recaptcha-container"></div>
-      
+
       <div style={{ textAlign: 'center', marginBottom: 40 }}>
         <div style={{ fontSize: 56, marginBottom: 16 }}>💊</div>
         <h2 style={{ fontSize: 28, fontWeight: 800 }}>MediDose Care</h2>
@@ -274,16 +274,16 @@ export default function LoginPage() {
             <div className="card" style={{ padding: 16, marginBottom: 8, background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
               <p style={{ fontSize: 13, fontWeight: 600, marginBottom: 12, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Login As</p>
               <div style={{ display: 'flex', gap: 12 }}>
-                <button 
-                  className={`btn ${userRole === 'patient' ? 'btn-primary' : 'btn-ghost'}`} 
+                <button
+                  className={`btn ${userRole === 'patient' ? 'btn-primary' : 'btn-ghost'}`}
                   style={{ flex: 1, height: 80, flexDirection: 'column', gap: 4 }}
                   onClick={() => setUserRole('patient')}
                 >
                   <span style={{ fontSize: 24 }}>👤</span>
                   <span style={{ fontSize: 13 }}>Patient</span>
                 </button>
-                <button 
-                  className={`btn ${userRole === 'doctor' ? 'btn-primary' : 'btn-ghost'}`} 
+                <button
+                  className={`btn ${userRole === 'doctor' ? 'btn-primary' : 'btn-ghost'}`}
                   style={{ flex: 1, height: 80, flexDirection: 'column', gap: 4 }}
                   onClick={() => setUserRole('doctor')}
                 >
@@ -292,7 +292,7 @@ export default function LoginPage() {
                 </button>
               </div>
             </div>
-            
+
             <button className="btn btn-primary btn-full" onClick={handleGoogleLogin} disabled={loading} style={{ background: '#fff', color: '#111', gap: 12 }}>
               <Chrome size={20} /> Continue with Google
             </button>
@@ -410,7 +410,7 @@ export default function LoginPage() {
               <ChevronLeft size={16} /> Back
             </button>
             <h3 style={{ marginBottom: 20 }}>Login with Phone</h3>
-            
+
             {step === 'input' ? (
               <>
                 <div className="input-group">
@@ -431,7 +431,7 @@ export default function LoginPage() {
                   {otp.map((d, i) => (
                     <input key={i} ref={otpRefs[i]} className="otp-box" style={{ width: 44, height: 50, fontSize: 20 }} type="tel" maxLength={1} value={d}
                       onChange={e => handleOtpChange(e.target.value, i)}
-                      onKeyDown={e => e.key === 'Backspace' && !otp[i] && i > 0 && otpRefs[i-1].current.focus()} />
+                      onKeyDown={e => e.key === 'Backspace' && !otp[i] && i > 0 && otpRefs[i - 1].current.focus()} />
                   ))}
                 </div>
                 <button className="btn btn-primary btn-full" onClick={verifyOtp} disabled={loading}>

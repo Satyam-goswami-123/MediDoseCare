@@ -1,14 +1,25 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useApp } from '../context/AppContext';
 import { Pill } from 'lucide-react';
 
 export default function SplashPage() {
   const navigate = useNavigate();
+  const { user, loading } = useApp();
 
   useEffect(() => {
-    const t = setTimeout(() => navigate('/onboarding/1'), 2500);
+    if (loading) return;
+
+    const t = setTimeout(() => {
+      if (user) {
+        navigate(user.role === 'doctor' ? '/doctor/dashboard' : '/home');
+      } else {
+        navigate('/onboarding/1');
+      }
+    }, 1500);
+
     return () => clearTimeout(t);
-  }, [navigate]);
+  }, [loading, user, navigate]);
 
   return (
     <div className="splash-bg page-enter">

@@ -2,6 +2,9 @@ const db = require('../config/db');
 
 const getMedicinesByUser = async (userId) => {
   const [rows] = await db.query('SELECT * FROM medicines WHERE user_id = ? ORDER BY created_at DESC', [userId]);
+  const now = new Date();
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  
   return rows.map(r => {
     let times = [];
     try {
@@ -10,10 +13,22 @@ const getMedicinesByUser = async (userId) => {
     } catch (e) {
       times = ['08:00'];
     }
+
+    // Reset status to upcoming if it was taken on a previous day
+    let currentStatus = r.status || 'upcoming';
+    if (r.last_taken_date) {
+      const lastTakenDate = new Date(r.last_taken_date);
+      const lastTakenDateStr = `${lastTakenDate.getFullYear()}-${String(lastTakenDate.getMonth() + 1).padStart(2, '0')}-${String(lastTakenDate.getDate()).padStart(2, '0')}`;
+      
+      if (lastTakenDateStr !== today && currentStatus === 'taken') {
+        currentStatus = 'upcoming';
+      }
+    }
+
     return { 
       ...r, 
       times, 
-      status: r.status || 'upcoming' 
+      status: currentStatus
     };
   });
 };
@@ -22,7 +37,7 @@ const getMedicineById = async (id) => {
   const [rows] = await db.query('SELECT * FROM medicines WHERE id = ?', [id]);
   const r = rows[0];
   if (!r) return null;
-  
+
   let times = [];
   try {
     times = typeof r.times === 'string' ? JSON.parse(r.times) : (r.times || []);
@@ -30,11 +45,24 @@ const getMedicineById = async (id) => {
   } catch (e) {
     times = ['08:00'];
   }
+
+  const now = new Date();
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   
+  let currentStatus = r.status || 'upcoming';
+  if (r.last_taken_date) {
+    const lastTakenDate = new Date(r.last_taken_date);
+    const lastTakenDateStr = `${lastTakenDate.getFullYear()}-${String(lastTakenDate.getMonth() + 1).padStart(2, '0')}-${String(lastTakenDate.getDate()).padStart(2, '0')}`;
+    
+    if (lastTakenDateStr !== today && currentStatus === 'taken') {
+      currentStatus = 'upcoming';
+    }
+  }
+
   return { 
     ...r, 
     times, 
-    status: r.status || 'upcoming' 
+    status: currentStatus
   };
 };
 
@@ -50,19 +78,29 @@ const createMedicine = async (data) => {
 const updateMedicine = async (id, data) => {
   const fields = [];
   const values = [];
-  
+
   if (data.name) { fields.push('name=?'); values.push(data.name); }
   if (data.dosage) { fields.push('dosage=?'); values.push(data.dosage); }
   if (data.frequency) { fields.push('frequency=?'); values.push(data.frequency); }
   if (data.times) { fields.push('times=?'); values.push(JSON.stringify(data.times)); }
+  if (data.status) { 
+    fields.push('status=?'); 
+    values.push(data.status);
+    if (data.status === 'taken') {
+      fields.push('last_taken_date=?');
+      const now = new Date();
+      const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      values.push(today);
+    }
+  }
+
   if (data.start_date) { fields.push('start_date=?'); values.push(data.start_date); }
   if (data.end_date !== undefined) { fields.push('end_date=?'); values.push(data.end_date); }
   if (data.instructions !== undefined) { fields.push('instructions=?'); values.push(data.instructions); }
   if (data.color) { fields.push('color=?'); values.push(data.color); }
-  if (data.status) { fields.push('status=?'); values.push(data.status); }
-  
+
   if (fields.length === 0) return getMedicineById(id);
-  
+
   values.push(id);
   await db.query(`UPDATE medicines SET ${fields.join(', ')} WHERE id=?`, values);
   return getMedicineById(id);
@@ -91,34 +129,34 @@ const reclaimMedicinesByName = async (name, currentUserId) => {
   // 1. Find all users with this name (except the current one)
   const [users] = await db.query('SELECT id FROM users WHERE name = ? AND id != ?', [name, currentUserId]);
   if (users.length === 0) return 0;
-  
+
   const oldUserIds = users.map(u => u.id);
-  
+
   // 2. Update all data from those users to the current user
   const idList = oldUserIds.join(',');
-  
+
   // Update Medicines
   const [medRes] = await db.query(`UPDATE medicines SET user_id = ? WHERE user_id IN (${idList})`, [currentUserId]);
-  
+
   // Update Health Logs
   await db.query(`UPDATE health_logs SET user_id = ? WHERE user_id IN (${idList})`, [currentUserId]);
-  
+
   // Update Prescriptions
   await db.query(`UPDATE prescriptions SET user_id = ? WHERE user_id IN (${idList})`, [currentUserId]);
-  
+
   // Update Dose Logs (History)
   await db.query(`UPDATE dose_logs SET user_id = ? WHERE user_id IN (${idList})`, [currentUserId]);
-  
+
   return medRes.affectedRows;
 };
 
-module.exports = { 
-  getMedicinesByUser, 
-  getMedicineById, 
-  createMedicine, 
-  updateMedicine, 
-  deleteMedicine, 
-  getDoseLogs, 
+module.exports = {
+  getMedicinesByUser,
+  getMedicineById,
+  createMedicine,
+  updateMedicine,
+  deleteMedicine,
+  getDoseLogs,
   updateDoseStatus,
   reclaimMedicinesByName
 };

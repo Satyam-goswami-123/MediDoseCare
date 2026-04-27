@@ -1,20 +1,20 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { 
-  Users, Calendar, Clock, FileText, CheckCircle, Bell, Search, Plus, 
-  ChevronRight, Stethoscope, Activity, Phone, Video, MessageSquare, 
+import {
+  Users, Calendar, Clock, FileText, CheckCircle, Bell, Search, Plus,
+  ChevronRight, Stethoscope, Activity, Phone, Video, MessageSquare,
   User, Save, Camera, ArrowLeft, Clipboard
 } from 'lucide-react';
 
 export default function DoctorDashboardPage() {
   const navigate = useNavigate();
   const { user, appointments, registeredDoctors, updateDoctorProfile, addPrescription } = useApp();
-  
+
   const [activeTab, setActiveTab] = useState('overview'); // overview, appointments, profile
   const [activeConsultation, setActiveConsultation] = useState(null); // The patient being consulted
   const [consultationStep, setConsultationStep] = useState('call'); // call, prescription
-  
+
   // Profile Edit State
   const [profileData, setProfileData] = useState({
     name: user?.name || '',
@@ -87,7 +87,7 @@ export default function DoctorDashboardPage() {
 
   return (
     <div className="page-enter" style={{ background: 'var(--bg-app)', minHeight: '100vh', paddingBottom: 80 }}>
-      
+
       {/* Consultation Overlay */}
       {activeConsultation && (
         <div style={{ position: 'fixed', inset: 0, background: 'var(--bg-app)', zIndex: 1000, overflowY: 'auto' }}>
@@ -103,10 +103,10 @@ export default function DoctorDashboardPage() {
                 </div>
                 <div style={{ fontSize: 18, color: 'var(--green)', fontWeight: 700 }}>04:12</div>
               </div>
-              
+
               <div style={{ padding: '40px 20px', display: 'flex', justifyContent: 'center', gap: 30 }}>
                 <button style={{ width: 64, height: 64, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', border: 'none', color: 'white' }}><MessageSquare size={24} /></button>
-                <button 
+                <button
                   onClick={finishConsultation}
                   style={{ width: 64, height: 64, borderRadius: '50%', background: 'var(--red)', border: 'none', color: 'white' }}
                 >
@@ -121,7 +121,7 @@ export default function DoctorDashboardPage() {
                 <button className="back-btn" onClick={() => setActiveConsultation(null)}><ArrowLeft size={20} /></button>
                 <h2>New Prescription</h2>
               </div>
-              
+
               <div className="card" style={{ marginBottom: 20, padding: 16, background: 'var(--blue-dim)', border: '1px solid var(--blue-border)' }}>
                 <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 4 }}>Patient Details</div>
                 <div style={{ fontWeight: 800, fontSize: 18 }}>{activeConsultation.patientName}</div>
@@ -129,12 +129,12 @@ export default function DoctorDashboardPage() {
               </div>
 
               <div className="section-label">Diagnosis</div>
-              <textarea 
-                className="input" 
+              <textarea
+                className="input"
                 placeholder="Enter diagnosis..."
                 style={{ height: 80, marginBottom: 20 }}
                 value={prescriptionForm.diagnosis}
-                onChange={(e) => setPrescriptionForm({...prescriptionForm, diagnosis: e.target.value})}
+                onChange={(e) => setPrescriptionForm({ ...prescriptionForm, diagnosis: e.target.value })}
               />
 
               <div className="section-label" style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -143,38 +143,38 @@ export default function DoctorDashboardPage() {
               </div>
               {prescriptionForm.medicines.map((med, i) => (
                 <div key={i} className="card" style={{ marginBottom: 12, padding: 12 }}>
-                  <input 
-                    className="input" 
-                    placeholder="Medicine Name" 
+                  <input
+                    className="input"
+                    placeholder="Medicine Name"
                     style={{ marginBottom: 8 }}
                     value={med.name}
                     onChange={(e) => {
                       const newMeds = [...prescriptionForm.medicines];
                       newMeds[i].name = e.target.value;
-                      setPrescriptionForm({...prescriptionForm, medicines: newMeds});
+                      setPrescriptionForm({ ...prescriptionForm, medicines: newMeds });
                     }}
                   />
                   <div style={{ display: 'flex', gap: 8 }}>
-                    <input 
-                      className="input" 
-                      placeholder="Dosage" 
-                      style={{ flex: 1 }} 
+                    <input
+                      className="input"
+                      placeholder="Dosage"
+                      style={{ flex: 1 }}
                       value={med.dosage}
                       onChange={(e) => {
                         const newMeds = [...prescriptionForm.medicines];
                         newMeds[i].dosage = e.target.value;
-                        setPrescriptionForm({...prescriptionForm, medicines: newMeds});
+                        setPrescriptionForm({ ...prescriptionForm, medicines: newMeds });
                       }}
                     />
-                    <input 
-                      className="input" 
-                      placeholder="Frequency" 
-                      style={{ flex: 1 }} 
+                    <input
+                      className="input"
+                      placeholder="Frequency"
+                      style={{ flex: 1 }}
                       value={med.frequency}
                       onChange={(e) => {
                         const newMeds = [...prescriptionForm.medicines];
                         newMeds[i].frequency = e.target.value;
-                        setPrescriptionForm({...prescriptionForm, medicines: newMeds});
+                        setPrescriptionForm({ ...prescriptionForm, medicines: newMeds });
                       }}
                     />
                   </div>
@@ -182,12 +182,12 @@ export default function DoctorDashboardPage() {
               ))}
 
               <div className="section-label">Additional Instructions</div>
-              <textarea 
-                className="input" 
+              <textarea
+                className="input"
                 placeholder="Any dietary advice or follow-up notes..."
                 style={{ height: 80, marginBottom: 30 }}
                 value={prescriptionForm.instructions}
-                onChange={(e) => setPrescriptionForm({...prescriptionForm, instructions: e.target.value})}
+                onChange={(e) => setPrescriptionForm({ ...prescriptionForm, instructions: e.target.value })}
               />
 
               <button className="btn btn-blue btn-full" onClick={handlePrescriptionSubmit}>Send Prescription to Patient</button>
@@ -197,9 +197,9 @@ export default function DoctorDashboardPage() {
       )}
 
       {/* Header */}
-      <div style={{ 
-        padding: '24px 20px', 
-        background: 'rgba(255, 255, 255, 0.05)', 
+      <div style={{
+        padding: '24px 20px',
+        background: 'rgba(255, 255, 255, 0.05)',
         backdropFilter: 'blur(10px)',
         borderBottom: '1px solid var(--border)',
         display: 'flex',
@@ -224,10 +224,10 @@ export default function DoctorDashboardPage() {
       {/* Tabs */}
       <div style={{ display: 'flex', padding: '0 20px', borderBottom: '1px solid var(--border)' }}>
         {['overview', 'appointments', 'profile'].map((tab) => (
-          <button 
+          <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            style={{ 
+            style={{
               flex: 1, padding: '16px 0', background: 'none', border: 'none', color: activeTab === tab ? 'var(--blue)' : 'var(--text-muted)',
               fontSize: 14, fontWeight: 700, borderBottom: `3px solid ${activeTab === tab ? 'var(--blue)' : 'transparent'}`,
               textTransform: 'capitalize', transition: '0.2s'
@@ -299,40 +299,134 @@ export default function DoctorDashboardPage() {
         )}
 
         {activeTab === 'profile' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-            <div style={{ position: 'relative', width: 100, height: 100, margin: '0 auto' }}>
-              <img src={profileData.image} alt="Profile" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover', border: '4px solid var(--blue)' }} />
-              <button style={{ position: 'absolute', bottom: 0, right: 0, width: 32, height: 32, borderRadius: '50%', background: 'var(--blue)', color: 'white', border: '2px solid var(--bg-app)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Camera size={16} />
-              </button>
+          <div className="slide-up" style={{ display: 'flex', flexDirection: 'column', gap: 24, paddingBottom: 40 }}>
+            
+            {/* Premium Profile Header */}
+            <div style={{ 
+              background: 'linear-gradient(135deg, var(--blue-dim), var(--purple-dim))',
+              borderRadius: 24,
+              padding: '40px 20px',
+              textAlign: 'center',
+              border: '1px solid rgba(59,130,246,0.15)',
+              position: 'relative',
+              overflow: 'hidden'
+            }}>
+              <div style={{ position: 'absolute', top: -20, right: -20, width: 100, height: 100, borderRadius: '50%', background: 'var(--blue)', opacity: 0.1, filter: 'blur(20px)' }}></div>
+              <div style={{ position: 'absolute', bottom: -20, left: -20, width: 80, height: 80, borderRadius: '50%', background: 'var(--purple)', opacity: 0.1, filter: 'blur(20px)' }}></div>
+
+              <div style={{ position: 'relative', width: 120, height: 120, margin: '0 auto 16px' }}>
+                <img 
+                  src={profileData.image || 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=400&h=400&fit=crop'} 
+                  alt="Profile" 
+                  style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover', border: '4px solid white', boxShadow: '0 8px 24px rgba(0,0,0,0.1)' }} 
+                />
+                <input 
+                  type="file" 
+                  id="doctor-img-upload" 
+                  hidden 
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onloadend = () => setProfileData({ ...profileData, image: reader.result });
+                      reader.readAsDataURL(file);
+                    }
+                  }}
+                />
+                <button 
+                  onClick={() => document.getElementById('doctor-img-upload').click()}
+                  style={{ position: 'absolute', bottom: 6, right: 6, width: 36, height: 36, borderRadius: '50%', background: 'var(--blue)', color: 'white', border: '3px solid white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 4px 12px rgba(59,130,246,0.3)' }}
+                >
+                  <Camera size={18} />
+                </button>
+              </div>
+
+              <h2 style={{ fontSize: 26, fontWeight: 800, color: 'var(--text-primary)' }}>{profileData.name}</h2>
+              <p style={{ color: 'var(--blue)', fontWeight: 700, fontSize: 15, marginTop: 4, textTransform: 'uppercase', letterSpacing: 1.5 }}>{profileData.qualification || 'MBBS, MD'}</p>
+              
+              <div style={{ display: 'flex', justifyContent: 'center', gap: 12, marginTop: 18 }}>
+                <span className="badge badge-blue" style={{ padding: '8px 14px', fontSize: 11, borderRadius: 10 }}>⭐ 4.9 Rating</span>
+                <span className="badge badge-purple" style={{ padding: '8px 14px', fontSize: 11, borderRadius: 10 }}>🏆 Verified</span>
+              </div>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 15 }}>
-              <div>
-                <label style={{ fontSize: 12, color: 'var(--text-muted)', marginLeft: 4 }}>Full Name</label>
+            {/* Quick Stats Bar */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+              {[
+                { label: 'Experience', val: `${profileData.experience}Y+`, color: 'var(--blue)' },
+                { label: 'Consulted', val: '500+', color: 'var(--purple)' },
+                { label: 'Fee', val: `₹${profileData.fee}`, color: 'var(--green)' },
+              ].map((s, i) => (
+                <div key={i} className="card" style={{ textAlign: 'center', padding: '16px 8px', borderBottom: `3px solid ${s.color}40` }}>
+                  <div style={{ fontWeight: 800, fontSize: 20, color: 'var(--text-primary)' }}>{s.val}</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600, marginTop: 4 }}>{s.label}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Professional Background Card */}
+            <div className="section-label" style={{ marginBottom: -8 }}>Professional Details</div>
+            <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 24, padding: 24 }}>
+              <div className="input-group">
+                <label className="input-label" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <Users size={18} color="var(--blue)" /> Display Name
+                </label>
                 <input className="input" value={profileData.name} onChange={(e) => setProfileData({...profileData, name: e.target.value})} />
               </div>
-              <div>
-                <label style={{ fontSize: 12, color: 'var(--text-muted)', marginLeft: 4 }}>Specialization</label>
-                <input className="input" value={profileData.specialty} onChange={(e) => setProfileData({...profileData, specialty: e.target.value})} />
-              </div>
-              <div>
-                <label style={{ fontSize: 12, color: 'var(--text-muted)', marginLeft: 4 }}>Hospital/Clinic</label>
-                <input className="input" value={profileData.hospital} onChange={(e) => setProfileData({...profileData, hospital: e.target.value})} />
-              </div>
-              <div>
-                <label style={{ fontSize: 12, color: 'var(--text-muted)', marginLeft: 4 }}>Profile Image URL</label>
-                <input className="input" value={profileData.image} onChange={(e) => setProfileData({...profileData, image: e.target.value})} />
-              </div>
-              <div>
-                <label style={{ fontSize: 12, color: 'var(--text-muted)', marginLeft: 4 }}>Experience</label>
-                <input className="input" value={profileData.experience} onChange={(e) => setProfileData({...profileData, experience: e.target.value})} />
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                <div className="input-group">
+                  <label className="input-label">Qualification</label>
+                  <input className="input" value={profileData.qualification} onChange={(e) => setProfileData({...profileData, qualification: e.target.value})} />
+                </div>
+                <div className="input-group">
+                  <label className="input-label">Specialization</label>
+                  <input className="input" value={profileData.specialty} onChange={(e) => setProfileData({...profileData, specialty: e.target.value})} />
+                </div>
               </div>
 
-              <button className="btn btn-blue btn-full" style={{ marginTop: 10, gap: 8 }} onClick={handleProfileSave}>
-                <Save size={18} /> Save Profile Changes
+              <div className="input-group">
+                <label className="input-label" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <Activity size={18} color="var(--purple)" /> Hospital / Clinic
+                </label>
+                <input className="input" value={profileData.hospital} onChange={(e) => setProfileData({...profileData, hospital: e.target.value})} />
+              </div>
+
+              <div className="input-group">
+                <label className="input-label">About / Biography</label>
+                <textarea 
+                  className="input" 
+                  style={{ height: 120, lineHeight: 1.6, padding: '12px 16px' }} 
+                  value={profileData.bio} 
+                  onChange={(e) => setProfileData({...profileData, bio: e.target.value})} 
+                  placeholder="Share your expertise and medical journey with your patients..." 
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                <div className="input-group">
+                  <label className="input-label">Experience (Years)</label>
+                  <input className="input" type="number" value={profileData.experience} onChange={(e) => setProfileData({...profileData, experience: e.target.value})} />
+                </div>
+                <div className="input-group">
+                  <label className="input-label">Consultation Fee (₹)</label>
+                  <input className="input" type="number" value={profileData.fee} onChange={(e) => setProfileData({...profileData, fee: e.target.value})} />
+                </div>
+              </div>
+
+              <button className="btn btn-blue btn-full" style={{ padding: '18px', gap: 12, fontSize: 16, fontWeight: 700, borderRadius: 16 }} onClick={handleProfileSave}>
+                <Save size={22} /> Save Professional Profile
               </button>
             </div>
+
+            <button 
+              className="btn btn-ghost btn-full" 
+              style={{ color: 'var(--red)', background: 'var(--red-dim)', padding: 16, borderRadius: 16 }}
+              onClick={() => { logout(); navigate('/login'); }}
+            >
+              Sign Out from Dashboard
+            </button>
           </div>
         )}
       </div>

@@ -33,9 +33,9 @@ import ReminderModal from './components/ReminderModal';
 function AppShell() {
   const { pathname } = useLocation();
   const { loading, user, activeReminder, setActiveReminder, markDose, snoozeMedicine } = useApp();
-  
+
   const isDoctor = user?.role === 'doctor';
-  
+
   const showNav = !isDoctor && ['/home', '/medicines', '/health', '/prescriptions', '/profile', '/notifications', '/settings'].some(p => pathname.startsWith(p));
   const showDoctorNav = isDoctor && ['/doctor/dashboard', '/profile', '/notifications', '/settings'].some(p => pathname.startsWith(p));
 
@@ -60,7 +60,7 @@ function AppShell() {
             <Route path="/onboarding/2" element={<Onboarding2Page />} />
             <Route path="/onboarding/3" element={<Onboarding3Page />} />
             <Route path="/login" element={<LoginPage />} />
-            
+
             {/* Patient Routes */}
             <Route path="/home" element={<HomePage />} />
             <Route path="/medicines" element={<MedicineListPage />} />
@@ -73,10 +73,10 @@ function AppShell() {
             <Route path="/prescriptions/:id" element={<ViewPrescriptionPage />} />
             <Route path="/sos" element={<SosPage />} />
             <Route path="/care-network" element={<CareNetworkPage />} />
-            
+
             {/* Doctor Routes */}
             <Route path="/doctor/dashboard" element={<DoctorDashboardPage />} />
-            
+
             {/* Shared Routes */}
             <Route path="/notifications" element={<NotificationsPage />} />
             <Route path="/profile" element={<ProfilePage />} />
@@ -84,15 +84,15 @@ function AppShell() {
             <Route path="/ai-coach" element={<AiCoachPage />} />
             <Route path="/achievements" element={<AchievementsPage />} />
             <Route path="/settings" element={<SettingsPage />} />
-            
+
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </div>
       </div>
       {showNav && <BottomNav />}
-      
+
       {activeReminder && (
-        <ReminderModal 
+        <ReminderModal
           medicine={activeReminder}
           onTake={() => markDose(activeReminder.id, 'taken')}
           onSnooze={(mins) => snoozeMedicine(activeReminder, mins)}

@@ -14,12 +14,12 @@ export default function PrescriptionsPage() {
           <h2>Prescriptions</h2>
           <button className="btn btn-green btn-sm" style={{ marginLeft: 'auto' }}
             onClick={() => {
-              addPrescription({ 
-                id: Date.now(), 
-                doctor: 'Dr. Priya Sharma', 
-                title: 'General Health Exam', 
-                date: new Date().toLocaleDateString(), 
-                type: 'PDF' 
+              addPrescription({
+                id: Date.now(),
+                doctor: 'Dr. Priya Sharma',
+                title: 'General Health Exam',
+                date: new Date().toLocaleDateString(),
+                type: 'PDF'
               });
             }}>+ New Upload</button>
         </div>

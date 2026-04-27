@@ -3,6 +3,7 @@ import { auth } from '../firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { Pill, Flame, Trophy, AlertTriangle } from 'lucide-react';
 import { medicinesApi, healthApi, prescriptionsApi, notificationsApi, authApi } from '../api';
+import { applyLanguageToUI } from '../utils/languageTranslator';
 
 const AppContext = createContext(null);
 
@@ -24,11 +25,11 @@ export function AppProvider({ children }) {
   const [notifications, setNotifications] = useState([]);
   const [doseHistory, setDoseHistory] = useState([]);
   const [registeredDoctors, setRegisteredDoctors] = useState([
-    { 
+    {
       id: 101,
-      name: 'Dr. Priya Sharma', 
-      specialty: 'Diabetologist', 
-      hospital: 'Apollo Hospitals', 
+      name: 'Dr. Priya Sharma',
+      specialty: 'Diabetologist',
+      hospital: 'Apollo Hospitals',
       image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQfhnh1tlasXW18unaAU-rHt8GbVCNxlfGR2w&s',
       experience: '12 Years',
       rating: 4.8,
@@ -181,7 +182,7 @@ export function AppProvider({ children }) {
 
     const triggerReminder = (med) => {
       setActiveReminder(med);
-      
+
       // Browser Notification
       if (Notification.permission === "granted") {
         new Notification("MediDoseCare: Time for Medicine", {
@@ -195,6 +196,12 @@ export function AppProvider({ children }) {
     const interval = setInterval(checkReminders, 10000); // Check every 10 seconds
     return () => clearInterval(interval);
   }, [medicines, activeReminder, snoozedReminders]);
+
+  // ✅ Language Effect
+  useEffect(() => {
+    localStorage.setItem('mdc_language', language);
+    applyLanguageToUI(language);
+  }, [language]);
 
   // ✅ Theme Effect (Restore Toggle Functionality)
   useEffect(() => {
@@ -270,7 +277,7 @@ export function AppProvider({ children }) {
     const now = new Date();
     now.setMinutes(now.getMinutes() + minutes);
     const remindAt = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-    
+
     setSnoozedReminders(prev => [...prev, { id: med.id, remindAt, med }]);
     setActiveReminder(null);
   };

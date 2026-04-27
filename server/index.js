@@ -7,6 +7,7 @@ const medicineRoutes = require('./routes/medicines.routes');
 const healthRoutes = require('./routes/health.routes');
 const prescriptionRoutes = require('./routes/prescriptions.routes');
 const notificationRoutes = require('./routes/notifications.routes');
+const appointmentsRoutes = require('./routes/appointments.routes');
 const sosRoutes = require('./routes/sos.routes');
 const userRoutes = require('./routes/users.routes');
 
@@ -21,6 +22,7 @@ app.use('/api/medicines', medicineRoutes);
 app.use('/api/health', healthRoutes);
 app.use('/api/prescriptions', prescriptionRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/appointments', appointmentsRoutes);
 app.use('/api/sos', sosRoutes);
 app.use('/api/users', userRoutes);
 

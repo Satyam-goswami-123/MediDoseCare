@@ -8,7 +8,7 @@ export default function AddMedicinePage() {
   const navigate = useNavigate();
   const { addMedicine } = useApp();
   const [form, setForm] = useState({
-    name: '', dosage: '', frequency: 'daily', times: ['08:00'], instructions: '', start_date: new Date().toISOString().split('T')[0], color: '#22C55E',
+    name: '', dosage: '', frequency: 'daily', times: ['08:00'], instructions: '', start_date: new Date().toLocaleDateString('sv-SE'), color: '#22C55E',
   });
   const [saving, setSaving] = useState(false);
 
