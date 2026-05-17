@@ -3,11 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { updateProfile } from 'firebase/auth';
 import { auth } from '../firebase';
-
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 export default function ProfilePage() {
   const navigate = useNavigate();
-  const { user, setUser, logout, settings } = useApp();
+  const { user, setUser, logout, settings, medicines, healthLogs } = useApp();
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({ name: user?.name || '', age: user?.age || '', blood_group: user?.blood_group || '', emergency_contact: user?.emergency_contact || '' });
 
@@ -58,6 +59,50 @@ export default function ProfilePage() {
     setEditing(false);
   };
 
+  const generatePDFReport = () => {
+    const doc = new jsPDF();
+
+    // Title
+    doc.setFontSize(20);
+    doc.text('MediDoseCare - Overall Platform Report', 14, 22);
+
+    doc.setFontSize(14);
+    doc.text('User Information', 14, 32);
+    doc.setFontSize(11);
+    doc.text(`Name: ${user?.name || 'N/A'}`, 14, 40);
+    doc.text(`Email: ${user?.email || 'N/A'}`, 14, 46);
+    doc.text(`Role: ${user?.role || 'Patient'}`, 14, 52);
+    doc.text(`Blood Group: ${user?.blood_group || 'N/A'}`, 14, 58);
+    doc.text(`Emergency Contact: ${user?.emergency_contact || 'N/A'}`, 14, 64);
+
+    // Active Medicines
+    doc.setFontSize(14);
+    doc.text('Active Medicines', 14, 76);
+    const medBody = medicines?.map(m => [m.name, m.dosage || 'N/A', m.frequency || 'N/A', m.type || 'N/A']) || [];
+    autoTable(doc, {
+      startY: 80,
+      head: [['Medicine', 'Dosage', 'Frequency', 'Type']],
+      body: medBody.length ? medBody : [['No active medicines found.', '', '', '']]
+    });
+
+    // Health Logs
+    doc.setFontSize(14);
+    const healthStartY = doc.lastAutoTable.finalY + 15;
+    doc.text('Recent Health Logs', 14, healthStartY);
+    const healthBody = healthLogs?.slice(0, 10).map(h => {
+      const date = new Date(h.created_at || h.date).toLocaleDateString();
+      return [date, h.type || 'Vitals', h.value || h.reading || 'N/A', h.notes || '-'];
+    }) || [];
+    
+    autoTable(doc, {
+      startY: healthStartY + 5,
+      head: [['Date', 'Type', 'Reading', 'Notes']],
+      body: healthBody.length ? healthBody : [['No health logs found.', '', '', '']]
+    });
+
+    doc.save(`MediDoseCare_Report_${user?.name?.replace(/\s+/g, '_') || 'User'}.pdf`);
+  };
+
   const sections = [
     {
       label: 'Medical Info', items: [
@@ -76,6 +121,7 @@ export default function ProfilePage() {
           action: () => navigate('/settings')
         },
         { icon: '⚙️', label: 'App Settings', action: () => navigate('/settings') },
+        { icon: '📄', label: 'Download Platform Report (PDF)', action: generatePDFReport },
       ]
     },
   ];
