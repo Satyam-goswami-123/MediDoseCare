@@ -294,12 +294,35 @@ export function AppProvider({ children }) {
     setAppointments(prev => [...prev, { ...appointment, id: Date.now(), status: 'scheduled' }]);
   };
 
-  const updateDoctorProfile = (doctorId, data) => {
+  const updateDoctorProfile = async (doctorId, data) => {
     setRegisteredDoctors(prev => prev.map(d => d.id === doctorId ? { ...d, ...data } : d));
     if (user?.id === doctorId) {
       const updatedUser = { ...user, ...data };
       setUser(updatedUser);
       localStorage.setItem('mdc_user', JSON.stringify(updatedUser));
+      try {
+        await usersApi.updateProfile(data);
+      } catch (e) {
+        console.error('Failed to sync doctor profile with server:', e);
+      }
+    }
+  };
+
+  const markNotificationRead = async (id) => {
+    try {
+      await notificationsApi.markRead(id);
+      await fetchAllData();
+    } catch (e) {
+      console.error('Failed to mark notification as read:', e);
+    }
+  };
+
+  const markAllNotificationsRead = async () => {
+    try {
+      await notificationsApi.markAllRead();
+      await fetchAllData();
+    } catch (e) {
+      console.error('Failed to mark all notifications as read:', e);
     }
   };
 
@@ -312,7 +335,7 @@ export function AppProvider({ children }) {
       activeReminder, setActiveReminder, snoozeMedicine,
       registeredDoctors, appointments,
       login, logout, fetchAllData, addMedicine, updateMedicine, deleteMedicine, addHealthLog, addPrescription, markDose, updateSettings,
-      bookAppointment, updateDoctorProfile,
+      bookAppointment, updateDoctorProfile, markNotificationRead, markAllNotificationsRead,
       setLanguage, toggleTheme: () => setTheme(prev => prev === 'dark' ? 'light' : 'dark'),
     }}>
       {children}

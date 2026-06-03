@@ -81,8 +81,15 @@ export default function LoginPage() {
     setLoading(true);
     setError('');
     try {
-      await signInWithPopup(auth, googleProvider);
-      navigate('/home');
+      const userCredential = await signInWithPopup(auth, googleProvider);
+      const response = await authApi.socialLogin({
+        email: userCredential.user.email,
+        name: userCredential.user.displayName,
+        uid: userCredential.user.uid,
+        role: userRole
+      });
+      login(response.user, response.token);
+      navigate(userRole === 'doctor' ? '/doctor/dashboard' : '/home');
     } catch (err) {
       setError(err.message);
     } finally {
@@ -190,7 +197,7 @@ export default function LoginPage() {
         user: response.user,
       }));
       login(response.user, response.token);
-      navigate('/home');
+      navigate(response.user.role === 'doctor' ? '/doctor/dashboard' : '/home');
     } catch (err) {
       setError(toFirebaseMessage(err));
     } finally {
@@ -231,8 +238,15 @@ export default function LoginPage() {
     setLoading(true);
     setError('');
     try {
-      await confirmationResult.confirm(code);
-      navigate('/home');
+      const userCredential = await confirmationResult.confirm(code);
+      const response = await authApi.socialLogin({
+        email: userCredential.user.email || `${phone}@medidose.care`,
+        name: userCredential.user.displayName || `User ${phone}`,
+        uid: userCredential.user.uid,
+        role: userRole
+      });
+      login(response.user, response.token);
+      navigate(userRole === 'doctor' ? '/doctor/dashboard' : '/home');
     } catch (err) {
       setError('Invalid OTP');
     } finally {

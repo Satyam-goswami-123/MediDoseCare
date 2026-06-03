@@ -14,7 +14,7 @@ const INSIGHTS = [
 export default function AiCoachPage() {
   const navigate = useNavigate();
   const { medicines, healthLogs, user } = useApp();
-  const latest = healthLogs[0] || {};
+  const latest = useMemo(() => healthLogs[0] || {}, [healthLogs]);
   
   const [isListening, setIsListening] = useState(false);
   const [voiceText, setVoiceText] = useState('');

@@ -13,6 +13,12 @@ export default function ProfilePage() {
   const [form, setForm] = useState({ name: user?.name || '', age: user?.age || '', blood_group: user?.blood_group || '', emergency_contact: user?.emergency_contact || '' });
 
   useEffect(() => {
+    if (user?.role === 'doctor') {
+      navigate('/doctor/dashboard?tab=profile', { replace: true });
+    }
+  }, [user, navigate]);
+
+  useEffect(() => {
     setForm({
       name: user?.name || '',
       age: user?.age || '',

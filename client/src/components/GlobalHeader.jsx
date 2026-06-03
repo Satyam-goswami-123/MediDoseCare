@@ -13,13 +13,19 @@ const NAV = [
 export default function GlobalHeader() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const { theme, toggleTheme, unreadCount, language, setLanguage } = useApp();
+  const { theme, toggleTheme, unreadCount, language, setLanguage, user } = useApp();
+
+  const isDoctor = user?.role === 'doctor';
+  const navItems = isDoctor ? [
+    { path: '/doctor/dashboard', icon: <Home size={18} />, label: 'Dashboard' },
+    { path: '/profile', icon: <User size={18} />, label: 'Profile' },
+  ] : NAV;
 
   return (
     <header className="global-header">
       <div className="header-container">
         {/* Brand */}
-        <div className="header-brand" onClick={() => navigate('/home')}>
+        <div className="header-brand" onClick={() => navigate(isDoctor ? '/doctor/dashboard' : '/home')}>
           <div className="header-logo">
             <Pill size={18} color="white" />
           </div>
@@ -31,8 +37,8 @@ export default function GlobalHeader() {
 
         {/* Desktop Nav */}
         <nav className="header-nav">
-          {NAV.map(({ path, icon, label }) => {
-            const isActive = pathname.startsWith(path);
+          {navItems.map(({ path, icon, label }) => {
+            const isActive = pathname.startsWith(path) || (path === '/profile' && pathname.startsWith('/profile'));
             return (
               <button 
                 key={path} 

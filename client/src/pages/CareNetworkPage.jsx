@@ -11,6 +11,8 @@ export default function CareNetworkPage() {
   const [bookingStep, setBookingStep] = useState('options'); // 'options', 'slots', 'payment', 'success'
   const [selectedType, setSelectedType] = useState(null);
   const [selectedSlot, setSelectedSlot] = useState(null);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('Google Pay / UPI');
+  const [patientSymptoms, setPatientSymptoms] = useState('');
 
   // Group booked slots by doctor name for visibility logic
   const bookedSlotsByDoc = appointments.reduce((acc, app) => {
@@ -38,7 +40,10 @@ export default function CareNetworkPage() {
       type: selectedType,
       slot: selectedSlot,
       date: '24 April 2026',
-      fee: bookingDoctor.fee
+      fee: bookingDoctor.fee,
+      paymentMethod: selectedPaymentMethod,
+      paymentStatus: 'Paid',
+      symptoms: patientSymptoms
     });
     setBookingStep('success');
   };
@@ -248,6 +253,15 @@ export default function CareNetworkPage() {
                     })}
                   </div>
 
+                  <div className="section-label" style={{ marginTop: 24 }}>Any symptoms or notes for the doctor?</div>
+                  <textarea
+                    className="input"
+                    placeholder="E.g., I have a mild fever and headache since yesterday..."
+                    style={{ height: 80 }}
+                    value={patientSymptoms}
+                    onChange={(e) => setPatientSymptoms(e.target.value)}
+                  />
+
                   <button
                     className="btn btn-blue"
                     style={{ marginTop: 32, padding: 16, borderRadius: 16, width: '100%' }}
@@ -280,12 +294,12 @@ export default function CareNetworkPage() {
                       { name: 'Debit / Credit Card', icon: '💳' },
                       { name: 'Net Banking', icon: '🏦' }
                     ].map((method) => (
-                      <div key={method.name} className="card" style={{ padding: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}>
+                      <div key={method.name} onClick={() => setSelectedPaymentMethod(method.name)} className="card" style={{ padding: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', border: selectedPaymentMethod === method.name ? '2px solid var(--blue)' : '2px solid transparent' }}>
                         <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
                           <span style={{ fontSize: 20 }}>{method.icon}</span>
                           <span style={{ fontSize: 14, fontWeight: 600 }}>{method.name}</span>
                         </div>
-                        <div style={{ width: 20, height: 20, borderRadius: '50%', border: '2px solid var(--border)' }} />
+                        <div style={{ width: 20, height: 20, borderRadius: '50%', border: selectedPaymentMethod === method.name ? '5px solid var(--blue)' : '2px solid var(--border)' }} />
                       </div>
                     ))}
                   </div>

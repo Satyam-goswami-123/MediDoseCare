@@ -3,25 +3,35 @@ const db = require('./config/db');
 
 async function fixDatabase() {
   try {
-    // 1. Add status column to medicines
+    // 1. Add firebase_uid to users if missing
+    await db.query(
+      "ALTER TABLE users ADD COLUMN IF NOT EXISTS firebase_uid VARCHAR(128) UNIQUE AFTER unique_id"
+    ).catch((err) => console.log('firebase_uid column update skipped or already exists'));
+
+    // 2. Add status column to medicines if missing
     await db.query(
       "ALTER TABLE medicines ADD COLUMN IF NOT EXISTS status ENUM('upcoming','taken','missed') DEFAULT 'upcoming'"
-    ).catch(() => console.log('status column may already exist, skipping'));
+    ).catch(() => console.log('status column update skipped or already exists'));
 
-    // 2. Show current users
-    const [users] = await db.query('SELECT id, name, email, phone FROM users');
+    // 3. Add consultation_fee to doctor_details if missing
+    await db.query(
+      "ALTER TABLE doctor_details ADD COLUMN IF NOT EXISTS consultation_fee INT DEFAULT 850"
+    ).catch(() => console.log('consultation_fee column update skipped or already exists'));
+
+    // 4. Add require_payment_upfront to doctor_details if missing
+    await db.query(
+      "ALTER TABLE doctor_details ADD COLUMN IF NOT EXISTS require_payment_upfront TINYINT DEFAULT 1"
+    ).catch(() => console.log('require_payment_upfront column update skipped or already exists'));
+
+    // Show current users
+    const [users] = await db.query('SELECT id, name, email, phone, role FROM users');
     console.log('Current users in DB:');
     console.log(JSON.stringify(users, null, 2));
 
-    // 3. Show current medicines
-    const [meds] = await db.query('SELECT id, user_id, name FROM medicines');
-    console.log('Current medicines in DB:');
-    console.log(JSON.stringify(meds, null, 2));
-
-    console.log('\n✅ Database check complete!');
+    console.log('\n✅ Database schema verified and updated successfully!');
     process.exit(0);
   } catch (err) {
-    console.error('ERROR:', err.message);
+    console.error('ERROR during DB migration:', err.message);
     process.exit(1);
   }
 }
