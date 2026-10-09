@@ -3,7 +3,15 @@ import { useApp } from '../context/AppContext';
 
 export default function MedicineListPage() {
   const navigate = useNavigate();
-  const { medicines } = useApp();
+  const { medicines, user } = useApp();
+
+  const handleAddMedicine = () => {
+    if (user) {
+      navigate('/medicines/add');
+    } else {
+      navigate('/login');
+    }
+  };
 
   return (
     <div className="page-enter">
@@ -11,7 +19,7 @@ export default function MedicineListPage() {
         <div className="page-header">
           <button className="back-btn" onClick={() => navigate('/home')}>←</button>
           <h2>My Medicines</h2>
-          <button className="btn btn-green btn-sm" style={{ marginLeft: 'auto' }} onClick={() => navigate('/medicines/add')}>+ Add</button>
+          <button className="btn btn-green btn-sm" style={{ marginLeft: 'auto' }} onClick={handleAddMedicine}>+ Add</button>
         </div>
 
         <div style={{ padding: '12px 20px 0' }}>
@@ -20,7 +28,7 @@ export default function MedicineListPage() {
               <div style={{ fontSize: 64, marginBottom: 16 }}>💊</div>
               <h3>No Medicines Added</h3>
               <p style={{ margin: '8px 0 20px' }}>Add your first medicine to start getting smart reminders</p>
-              <button className="btn btn-green" onClick={() => navigate('/medicines/add')}>+ Add Medicine</button>
+              <button className="btn btn-green" onClick={handleAddMedicine}>+ Add Medicine</button>
             </div>
           ) : (
             <>

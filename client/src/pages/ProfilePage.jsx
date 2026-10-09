@@ -179,7 +179,9 @@ export default function ProfilePage() {
               </div>
             ))
           )}
-          <button className="btn" style={{ width: '100%', background: 'var(--red-dim)', color: 'var(--red)', border: '1px solid rgba(239,68,68,0.3)' }} onClick={() => { logout(); navigate('/login'); }}>🚪 Sign Out</button>
+          {user && (
+            <button className="btn" style={{ width: '100%', background: 'var(--red-dim)', color: 'var(--red)', border: '1px solid rgba(239,68,68,0.3)' }} onClick={() => { logout(); navigate('/login'); }}>🚪 Sign Out</button>
+          )}
         </div>
       </div>
     </div>

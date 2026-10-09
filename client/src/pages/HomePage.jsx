@@ -202,7 +202,7 @@ export default function HomePage() {
                 { icon: <Users size={24} />, label: 'Care Team', path: '/care-network', color: 'var(--teal)' },
                 { icon: <Award size={24} />, label: 'Achievements', path: '/achievements', color: 'var(--gold)' },
               ].map(({ icon, label, path, color }) => (
-                <button key={path} onClick={() => navigate(path)} style={{
+                <button key={path} onClick={() => user ? navigate(path) : navigate('/login')} style={{
                   background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)',
                   padding: '14px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
                   cursor: 'pointer', transition: 'var(--transition)', color
@@ -218,7 +218,7 @@ export default function HomePage() {
           <div>
             <div className="flex justify-between items-center mb-16">
               <div className="section-label" style={{ marginBottom: 0 }}>Today's Medicines</div>
-              <button style={{ fontSize: 13, color: 'var(--blue)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }} onClick={() => navigate('/medicines')}>View All</button>
+              <button style={{ fontSize: 13, color: 'var(--blue)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }} onClick={() => user ? navigate('/medicines') : navigate('/login')}>View All</button>
             </div>
             <div className="card" style={{ padding: 0, overflow: 'hidden', background: 'linear-gradient(135deg,rgba(34,197,94,0.06),var(--bg-card))' }}>
               <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -314,7 +314,7 @@ export default function HomePage() {
               <button
                 className="btn btn-blue btn-sm"
                 style={{ padding: '6px 14px', borderRadius: 10 }}
-                onClick={() => navigate('/health')}
+                onClick={() => user ? navigate('/health') : navigate('/login')}
               >
                 Log Vitals
               </button>

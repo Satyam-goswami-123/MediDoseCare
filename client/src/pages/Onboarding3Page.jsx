@@ -24,7 +24,10 @@ export default function Onboarding3Page() {
           <button className="btn btn-ghost" onClick={() => navigate('/onboarding/2')}>← Back</button>
         </div>
       </div>
-      <button className="btn btn-primary btn-full" style={{ marginTop: 16 }} onClick={() => navigate('/login')}>Get Started</button>
+      <button className="btn btn-primary btn-full" style={{ marginTop: 16 }} onClick={() => {
+        localStorage.setItem('mdc_has_seen_onboarding', 'true');
+        navigate('/home');
+      }}>Get Started</button>
     </div>
   );
 }

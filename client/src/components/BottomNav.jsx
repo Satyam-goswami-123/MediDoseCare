@@ -13,16 +13,24 @@ const NAV = [
 export default function BottomNav() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const { unreadCount } = useApp();
+  const { unreadCount, user } = useApp();
+
+  const dynamicNav = [
+    { path: '/home', icon: <Home size={22} />, label: 'Home' },
+    { path: '/medicines', icon: <Pill size={22} />, label: 'Medicines' },
+    { path: '/health', icon: <HeartPulse size={22} />, label: 'Health' },
+    { path: '/prescriptions', icon: <FileText size={22} />, label: 'Rx' },
+    user ? { path: '/profile', icon: <User size={22} />, label: 'Profile' } : { path: '/login', icon: <User size={22} />, label: 'Login' },
+  ];
 
   return (
     <nav className="bottom-nav">
       <div className="nav-links-container">
-        {NAV.map(({ path, icon, label }) => {
+        {dynamicNav.map(({ path, icon, label }) => {
           const isActive = pathname.startsWith(path);
           const showBadge = path === '/home' && unreadCount > 0;
           return (
-            <button key={path} className={`nav-item${isActive ? ' active' : ''}`} onClick={() => navigate(path)}>
+            <button key={path} className={`nav-item${isActive ? ' active' : ''}`} onClick={() => (!user && path !== '/home' && path !== '/login') ? navigate('/login') : navigate(path)}>
               <span style={{ position: 'relative', display: 'flex' }}>
                 {icon}
                 {showBadge && (

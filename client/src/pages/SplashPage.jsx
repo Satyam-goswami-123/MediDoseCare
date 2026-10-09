@@ -14,7 +14,12 @@ export default function SplashPage() {
       if (user) {
         navigate(user.role === 'doctor' ? '/doctor/dashboard' : '/home');
       } else {
-        navigate('/onboarding/1');
+        const hasSeenOnboarding = localStorage.getItem('mdc_has_seen_onboarding');
+        if (hasSeenOnboarding) {
+          navigate('/home');
+        } else {
+          navigate('/onboarding/1');
+        }
       }
     }, 1500);
 

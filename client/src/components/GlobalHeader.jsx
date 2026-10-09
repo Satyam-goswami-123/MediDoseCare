@@ -58,15 +58,24 @@ export default function GlobalHeader() {
           <button className="header-btn" onClick={toggleTheme}>
             {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
           </button>
-          <button className="header-btn" onClick={() => navigate('/notifications')} style={{ position: 'relative' }}>
-            <Bell size={18} />
-            {unreadCount > 0 && (
-              <span className="header-badge">{unreadCount}</span>
-            )}
-          </button>
-          <button className="header-btn sos-mini" onClick={() => navigate('/sos')}>
-            <AlertTriangle size={18} color="var(--red)" />
-          </button>
+          
+          {user ? (
+            <>
+              <button className="header-btn" onClick={() => navigate('/notifications')} style={{ position: 'relative' }}>
+                <Bell size={18} />
+                {unreadCount > 0 && (
+                  <span className="header-badge">{unreadCount}</span>
+                )}
+              </button>
+              <button className="header-btn sos-mini" onClick={() => navigate('/sos')}>
+                <AlertTriangle size={18} color="var(--red)" />
+              </button>
+            </>
+          ) : (
+            <button className="btn btn-primary" style={{ padding: '6px 16px', fontSize: 13, borderRadius: 'var(--radius-full)' }} onClick={() => navigate('/login')}>
+              Login
+            </button>
+          )}
         </div>
       </div>
     </header>
