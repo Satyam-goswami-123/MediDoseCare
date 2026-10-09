@@ -1,0 +1,46 @@
+Step-by-Step Guide to Run MediDoseCare
+======================================
+
+1. Setup the Database
+   - Open your MySQL Workbench or MySQL Command Line Interface.
+   - Run the following command to import the database schema:
+     source server/schema.sql
+
+2. Setup Environment Variables
+   - Create a new file named `.env` in the main folder (MediDoseCare/).
+   - Copy the following text into it, fill in your details, and save:
+     DB_HOST=localhost
+     DB_USER=root
+     DB_PASS=
+     DB_NAME=medidosecare
+     JWT_SECRET=change_this_secret
+     SMTP_HOST=smtp.gmail.com
+     SMTP_PORT=587
+     SMTP_SECURE=false
+     SMTP_USER=your_email@gmail.com
+     SMTP_PASS=your_email_app_password
+     SMTP_FROM="MediDoseCare <your_email@gmail.com>"
+     CLIENT_URL=http://localhost:5173
+
+3. Start the Backend Server
+   - Open a new terminal (command prompt or PowerShell).
+   - Navigate to the main project folder (MediDoseCare).
+   - Run the following commands:
+     npm install
+     node server/index.js
+   - The server will start running on http://localhost:5000
+
+4. Start the Frontend Client
+   - Open another new terminal.
+   - Navigate to the 'client' folder inside the main project folder:
+     cd client
+   - Run the following commands:
+     npm install
+     npm run dev
+   - The frontend app will start running on http://localhost:5173
+
+5. Open the Application
+   - Open your web browser (like Google Chrome) and go to: http://localhost:5173
+   - Tip: Since this is a mobile-first application, it's recommended to open Developer Tools (F12) and toggle the device toolbar to view it as a mobile device (like iPhone 14 Pro).
+
+Note: The app can also run in a demo mode without a MySQL connection, where all demo data is pre-loaded in the React context.

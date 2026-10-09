@@ -310,14 +310,8 @@ export default function LoginPage() {
             <button className="btn btn-primary btn-full" onClick={handleGoogleLogin} disabled={loading} style={{ background: '#fff', color: '#111', gap: 12 }}>
               <Chrome size={20} /> Continue with Google
             </button>
-            <button className="btn btn-ghost btn-full" onClick={() => setMode('phone')} style={{ gap: 12 }}>
-              <Phone size={20} /> Login with Phone
-            </button>
             <button className="btn btn-ghost btn-full" onClick={() => setMode('email')} style={{ gap: 12 }}>
               <Mail size={20} /> Login with Email
-            </button>
-            <button className="btn btn-ghost btn-full" onClick={() => { setMode('emailOtp'); setOtpEmailSent(false); }} style={{ gap: 12 }}>
-              <Mail size={20} /> Login with OTP
             </button>
             <div style={{ textAlign: 'center', marginTop: 8 }}>
               <span style={{ color: 'var(--text-muted)', fontSize: 14 }}>New here? </span>
