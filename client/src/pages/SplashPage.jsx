@@ -12,13 +12,15 @@ export default function SplashPage() {
 
     const t = setTimeout(() => {
       if (user) {
+        // Logged-in: go to role-specific dashboard
         navigate(user.role === 'doctor' ? '/doctor/dashboard' : '/home');
       } else {
+        // Guest: show onboarding once, then always go to /home
         const hasSeenOnboarding = localStorage.getItem('mdc_has_seen_onboarding');
-        if (hasSeenOnboarding) {
-          navigate('/home');
-        } else {
+        if (!hasSeenOnboarding) {
           navigate('/onboarding/1');
+        } else {
+          navigate('/home'); // Guest lands on dashboard directly
         }
       }
     }, 1500);

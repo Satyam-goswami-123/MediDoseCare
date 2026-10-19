@@ -24,7 +24,10 @@ export default function Onboarding1Page() {
           <button className="btn btn-primary" onClick={() => navigate('/onboarding/2')}>Next →</button>
         </div>
       </div>
-      <button className="btn btn-ghost btn-full" style={{ marginTop: 16 }} onClick={() => navigate('/login')}>Skip</button>
+      <button className="btn btn-ghost btn-full" style={{ marginTop: 16 }} onClick={() => {
+        localStorage.setItem('mdc_has_seen_onboarding', 'true');
+        navigate('/home');
+      }}>Skip</button>
     </div>
   );
 }

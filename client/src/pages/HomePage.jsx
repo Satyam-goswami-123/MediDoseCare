@@ -160,12 +160,44 @@ export default function HomePage() {
   return (
     <div className="page-enter">
       <div className="page-content">
+
+        {/* 🔒 Guest Banner — shown only when not logged in */}
+        {!user && (
+          <div
+            onClick={() => navigate('/login')}
+            style={{
+              margin: '12px 16px 0',
+              padding: '12px 16px',
+              borderRadius: 14,
+              background: 'linear-gradient(135deg, rgba(59,130,246,0.15), rgba(168,85,247,0.15))',
+              border: '1px solid rgba(59,130,246,0.35)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              cursor: 'pointer',
+              gap: 12,
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ fontSize: 22 }}>👋</span>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--text-primary)' }}>Browsing as Guest</div>
+                <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Sign in to save your data &amp; get reminders</div>
+              </div>
+            </div>
+            <div style={{
+              background: 'var(--blue)', color: 'white', fontWeight: 700,
+              fontSize: 12, padding: '6px 14px', borderRadius: 20, whiteSpace: 'nowrap'
+            }}>Sign In</div>
+          </div>
+        )}
+
         {/* Header */}
         <div style={{ padding: '20px 20px 0', background: 'linear-gradient(180deg,rgba(59,130,246,0.08) 0%,transparent 100%)' }}>
           <div className="flex justify-between items-center">
             <div>
               <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>Good Morning,</p>
-              <h2 style={{ marginTop: 2 }}>{user?.name?.split(' ')[0] || 'User'}</h2>
+              <h2 style={{ marginTop: 2 }}>{user?.name?.split(' ')[0] || 'Guest'}</h2>
             </div>
           </div>
           {/* Positive Vibes Auto Slider */}

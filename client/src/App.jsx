@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { AppProvider, useApp } from './context/AppContext';
 
 import './styles/index.css';
@@ -29,6 +29,16 @@ import DoctorDashboardPage from './pages/DoctorDashboardPage';
 import BottomNav from './components/BottomNav';
 import GlobalHeader from './components/GlobalHeader';
 import ReminderModal from './components/ReminderModal';
+
+// ── Guard: only show login when user performs an action ──
+function RequireAuth({ children }) {
+  const { user } = useApp();
+  const location = useLocation();
+  if (!user) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+  return children;
+}
 
 function AppShell() {
   const { pathname } = useLocation();
@@ -61,29 +71,29 @@ function AppShell() {
             <Route path="/onboarding/3" element={<Onboarding3Page />} />
             <Route path="/login" element={<LoginPage />} />
 
-            {/* Patient Routes */}
+            {/* === Public (Guest-viewable) Routes === */}
             <Route path="/home" element={<HomePage />} />
             <Route path="/medicines" element={<MedicineListPage />} />
-            <Route path="/medicines/add" element={<AddMedicinePage />} />
             <Route path="/medicines/:id" element={<ReminderDetailPage />} />
-            <Route path="/medicines/:id/edit" element={<EditMedicinePage />} />
             <Route path="/health" element={<HealthDashboardPage />} />
             <Route path="/health/:type" element={<VitalsDetailPage />} />
             <Route path="/prescriptions" element={<PrescriptionsPage />} />
             <Route path="/prescriptions/:id" element={<ViewPrescriptionPage />} />
-            <Route path="/sos" element={<SosPage />} />
-            <Route path="/care-network" element={<CareNetworkPage />} />
+
+            {/* === Protected (Login Required) Routes === */}
+            <Route path="/medicines/add" element={<RequireAuth><AddMedicinePage /></RequireAuth>} />
+            <Route path="/medicines/:id/edit" element={<RequireAuth><EditMedicinePage /></RequireAuth>} />
+            <Route path="/sos" element={<RequireAuth><SosPage /></RequireAuth>} />
+            <Route path="/care-network" element={<RequireAuth><CareNetworkPage /></RequireAuth>} />
+            <Route path="/notifications" element={<RequireAuth><NotificationsPage /></RequireAuth>} />
+            <Route path="/profile" element={<RequireAuth><ProfilePage /></RequireAuth>} />
+            <Route path="/history" element={<RequireAuth><MedHistoryPage /></RequireAuth>} />
+            <Route path="/ai-coach" element={<RequireAuth><AiCoachPage /></RequireAuth>} />
+            <Route path="/achievements" element={<RequireAuth><AchievementsPage /></RequireAuth>} />
+            <Route path="/settings" element={<RequireAuth><SettingsPage /></RequireAuth>} />
 
             {/* Doctor Routes */}
-            <Route path="/doctor/dashboard" element={<DoctorDashboardPage />} />
-
-            {/* Shared Routes */}
-            <Route path="/notifications" element={<NotificationsPage />} />
-            <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/history" element={<MedHistoryPage />} />
-            <Route path="/ai-coach" element={<AiCoachPage />} />
-            <Route path="/achievements" element={<AchievementsPage />} />
-            <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/doctor/dashboard" element={<RequireAuth><DoctorDashboardPage /></RequireAuth>} />
 
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

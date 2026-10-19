@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { authApi } from '../api';
 import { auth, googleProvider } from '../firebase';
@@ -50,6 +50,10 @@ const saveSignupProfile = ({ uid, firstName, lastName, email }) => {
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  // If RequireAuth redirected the user here, send them back after login
+  const from = location.state?.from?.pathname || null;
+  const getRedirectPath = (role) => from || (role === 'doctor' ? '/doctor/dashboard' : '/home');
   const { login } = useApp();
   const [mode, setMode] = useState('choice'); // choice, email, phone, signup
   const [userRole, setUserRole] = useState('patient'); // patient, doctor
@@ -89,7 +93,7 @@ export default function LoginPage() {
         role: userRole
       });
       login(response.user, response.token);
-      navigate(userRole === 'doctor' ? '/doctor/dashboard' : '/home');
+      navigate(getRedirectPath(userRole));
     } catch (err) {
       setError(err.message);
     } finally {
@@ -149,7 +153,7 @@ export default function LoginPage() {
         });
 
         login(response.user, response.token);
-        navigate(userRole === 'doctor' ? '/doctor/dashboard' : '/home');
+        navigate(getRedirectPath(userRole));
       }
     } catch (err) {
       setError(toFirebaseMessage(err));
@@ -197,7 +201,7 @@ export default function LoginPage() {
         user: response.user,
       }));
       login(response.user, response.token);
-      navigate(response.user.role === 'doctor' ? '/doctor/dashboard' : '/home');
+      navigate(getRedirectPath(response.user.role));
     } catch (err) {
       setError(toFirebaseMessage(err));
     } finally {
@@ -246,7 +250,7 @@ export default function LoginPage() {
         role: userRole
       });
       login(response.user, response.token);
-      navigate(userRole === 'doctor' ? '/doctor/dashboard' : '/home');
+      navigate(getRedirectPath(userRole));
     } catch (err) {
       setError('Invalid OTP');
     } finally {
@@ -262,199 +266,418 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="page-enter" style={{ padding: 24, justifyContent: 'center' }}>
-      <div id="recaptcha-container"></div>
+    <div style={{
+      minHeight: '100%',
+      background: 'var(--bg-primary)',
+      display: 'flex',
+      flexDirection: 'column',
+      position: 'relative',
+      overflow: 'hidden',
+    }}>
+      <div id="recaptcha-container" />
 
-      <div style={{ textAlign: 'center', marginBottom: 40 }}>
-        <div style={{ fontSize: 56, marginBottom: 16 }}>💊</div>
-        <h2 style={{ fontSize: 28, fontWeight: 800 }}>MediDose Care</h2>
-        <p style={{ color: 'var(--text-secondary)', marginTop: 8 }}>Your health companion on every step</p>
+      {/* ── Animated background blobs ── */}
+      <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden' }}>
+        <div style={{
+          position: 'absolute', width: 320, height: 320, borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(59,130,246,0.18) 0%, transparent 70%)',
+          top: -80, left: -80, animation: 'pulse 4s ease-in-out infinite',
+        }} />
+        <div style={{
+          position: 'absolute', width: 260, height: 260, borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(168,85,247,0.15) 0%, transparent 70%)',
+          bottom: 60, right: -60, animation: 'pulse 5s ease-in-out infinite 1s',
+        }} />
+        <div style={{
+          position: 'absolute', width: 180, height: 180, borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(34,197,94,0.1) 0%, transparent 70%)',
+          top: '45%', left: '50%', transform: 'translate(-50%,-50%)',
+          animation: 'pulse 6s ease-in-out infinite 0.5s',
+        }} />
       </div>
 
-      {error && (
-        <div className="card" style={{ marginBottom: 20, borderColor: 'var(--red)', background: 'var(--red-dim)', color: 'var(--red)', fontSize: 13, padding: 12 }}>
-          {error}
-        </div>
+      {/* ── Back to home button ── */}
+      {mode !== 'choice' && (
+        <button
+          onClick={() => { setMode('choice'); setError(''); setSuccess(''); setOtpEmailSent(false); setStep('input'); }}
+          style={{
+            position: 'absolute', top: 16, left: 16, zIndex: 10,
+            background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)',
+            borderRadius: 12, padding: '8px 14px', color: 'var(--text-secondary)',
+            cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600,
+            backdropFilter: 'blur(8px)',
+          }}
+        >
+          <ChevronLeft size={15} /> Back
+        </button>
       )}
-      {success && (
-        <div className="card" style={{ marginBottom: 20, borderColor: 'var(--green)', background: 'rgba(34,197,94,0.12)', color: 'var(--green)', fontSize: 13, padding: 12 }}>
-          {success}
-        </div>
+      {mode === 'choice' && (
+        <button
+          onClick={() => navigate(-1)}
+          style={{
+            position: 'absolute', top: 16, left: 16, zIndex: 10,
+            background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)',
+            borderRadius: 12, padding: '8px 14px', color: 'var(--text-secondary)',
+            cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600,
+            backdropFilter: 'blur(8px)',
+          }}
+        >
+          <ChevronLeft size={15} /> Home
+        </button>
       )}
 
-      <div className="slide-up">
-        {mode === 'choice' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div className="card" style={{ padding: 16, marginBottom: 8, background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
-              <p style={{ fontSize: 13, fontWeight: 600, marginBottom: 12, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Login As</p>
-              <div style={{ display: 'flex', gap: 12 }}>
-                <button
-                  className={`btn ${userRole === 'patient' ? 'btn-primary' : 'btn-ghost'}`}
-                  style={{ flex: 1, height: 80, flexDirection: 'column', gap: 4 }}
-                  onClick={() => setUserRole('patient')}
-                >
-                  <span style={{ fontSize: 24 }}>👤</span>
-                  <span style={{ fontSize: 13 }}>Patient</span>
-                </button>
-                <button
-                  className={`btn ${userRole === 'doctor' ? 'btn-primary' : 'btn-ghost'}`}
-                  style={{ flex: 1, height: 80, flexDirection: 'column', gap: 4 }}
-                  onClick={() => setUserRole('doctor')}
-                >
-                  <span style={{ fontSize: 24 }}>👨‍⚕️</span>
-                  <span style={{ fontSize: 13 }}>Doctor</span>
-                </button>
-              </div>
-            </div>
+      {/* ── Main content ── */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '80px 24px 32px', position: 'relative', zIndex: 1 }}>
 
-            <button className="btn btn-primary btn-full" onClick={handleGoogleLogin} disabled={loading} style={{ background: '#fff', color: '#111', gap: 12 }}>
-              <Chrome size={20} /> Continue with Google
-            </button>
-            <button className="btn btn-ghost btn-full" onClick={() => setMode('email')} style={{ gap: 12 }}>
-              <Mail size={20} /> Login with Email
-            </button>
-            <div style={{ textAlign: 'center', marginTop: 8 }}>
-              <span style={{ color: 'var(--text-muted)', fontSize: 14 }}>New here? </span>
-              <button onClick={() => setMode('signup')} style={{ background: 'none', border: 'none', color: 'var(--blue)', fontWeight: 600, cursor: 'pointer' }}>Create Account</button>
-            </div>
+        {/* Logo + title */}
+        <div style={{ textAlign: 'center', marginBottom: 36 }}>
+          <div style={{
+            width: 72, height: 72, borderRadius: 22, margin: '0 auto 16px',
+            background: 'linear-gradient(135deg, #3B82F6, #8B5CF6)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 36, boxShadow: '0 8px 32px rgba(59,130,246,0.4)',
+            animation: 'float 3s ease-in-out infinite',
+          }}>💊</div>
+          <h2 style={{ fontSize: 26, fontWeight: 900, letterSpacing: -0.5 }}>
+            {mode === 'choice' ? 'Welcome Back' : mode === 'signup' ? 'Create Account' : mode === 'email' ? 'Sign In' : mode === 'emailOtp' ? 'OTP Login' : 'Phone Login'}
+          </h2>
+          <p style={{ color: 'var(--text-muted)', marginTop: 6, fontSize: 14 }}>
+            {mode === 'choice' ? 'Your health companion, always with you' : mode === 'signup' ? 'Join thousands of healthier seniors' : 'Secure & private authentication'}
+          </p>
+        </div>
+
+        {/* Error / Success banners */}
+        {error && (
+          <div style={{
+            marginBottom: 16, padding: '12px 16px', borderRadius: 14,
+            background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)',
+            color: '#F87171', fontSize: 13, fontWeight: 500, display: 'flex', gap: 8, alignItems: 'flex-start',
+          }}>
+            <span>⚠️</span> {error}
+          </div>
+        )}
+        {success && (
+          <div style={{
+            marginBottom: 16, padding: '12px 16px', borderRadius: 14,
+            background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.3)',
+            color: '#4ADE80', fontSize: 13, fontWeight: 500, display: 'flex', gap: 8, alignItems: 'flex-start',
+          }}>
+            <span>✅</span> {success}
           </div>
         )}
 
-        {(mode === 'email' || mode === 'signup') && (
-          <div>
-            <button className="btn-back" onClick={() => { setMode('choice'); setError(''); setSuccess(''); }} style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'none', border: 'none', color: 'var(--text-muted)', marginBottom: 24, cursor: 'pointer' }}>
-              <ChevronLeft size={16} /> Back
+        {/* ════ CHOICE MODE ════ */}
+        {mode === 'choice' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+
+            {/* Role Selector */}
+            <div style={{
+              background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: 18, padding: 6, display: 'flex', gap: 6, marginBottom: 4,
+              backdropFilter: 'blur(10px)',
+            }}>
+              {[
+                { role: 'patient', label: 'Patient', emoji: '🧑' },
+                { role: 'doctor', label: 'Doctor', emoji: '👨‍⚕️' },
+              ].map(({ role, label, emoji }) => (
+                <button
+                  key={role}
+                  onClick={() => setUserRole(role)}
+                  style={{
+                    flex: 1, padding: '12px 8px', borderRadius: 14, border: 'none',
+                    background: userRole === role
+                      ? 'linear-gradient(135deg,#3B82F6,#8B5CF6)'
+                      : 'transparent',
+                    color: userRole === role ? '#fff' : 'var(--text-muted)',
+                    fontWeight: 700, fontSize: 14, cursor: 'pointer',
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+                    transition: 'all 0.25s ease',
+                    boxShadow: userRole === role ? '0 4px 16px rgba(59,130,246,0.35)' : 'none',
+                  }}
+                >
+                  <span style={{ fontSize: 22 }}>{emoji}</span>
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {/* Google */}
+            <button
+              onClick={handleGoogleLogin}
+              disabled={loading}
+              style={{
+                width: '100%', padding: '15px 20px', borderRadius: 16, border: '1px solid rgba(255,255,255,0.15)',
+                background: 'rgba(255,255,255,0.95)', color: '#1a1a1a',
+                fontWeight: 700, fontSize: 15, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,
+                transition: 'all 0.2s ease',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.25)',
+              }}
+              onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
+              onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+              </svg>
+              {loading ? 'Connecting…' : 'Continue with Google'}
             </button>
-            <h3 style={{ marginBottom: 20 }}>{mode === 'signup' ? 'Create Account' : 'Welcome Back'}</h3>
+
+            {/* Divider */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.1)' }} />
+              <span style={{ color: 'var(--text-muted)', fontSize: 12, fontWeight: 600 }}>OR</span>
+              <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.1)' }} />
+            </div>
+
+            {/* Email Login */}
+            <button
+              onClick={() => setMode('email')}
+              style={{
+                width: '100%', padding: '15px 20px', borderRadius: 16,
+                border: '1px solid rgba(59,130,246,0.4)',
+                background: 'rgba(59,130,246,0.1)',
+                color: '#60A5FA', fontWeight: 700, fontSize: 15, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(59,130,246,0.2)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(59,130,246,0.1)'; e.currentTarget.style.transform = 'translateY(0)'; }}
+            >
+              <Mail size={20} /> Login with Email & Password
+            </button>
+
+            {/* Sign up link */}
+            <p style={{ textAlign: 'center', fontSize: 14, color: 'var(--text-muted)', marginTop: 4 }}>
+              New to MediDose?{' '}
+              <button
+                onClick={() => setMode('signup')}
+                style={{ background: 'none', border: 'none', color: '#818CF8', fontWeight: 700, cursor: 'pointer', fontSize: 14, padding: 0 }}
+              >
+                Create Account →
+              </button>
+            </p>
+          </div>
+        )}
+
+        {/* ════ EMAIL / SIGNUP MODE ════ */}
+        {(mode === 'email' || mode === 'signup') && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+
+            {/* Role selector (compact) */}
+            <div style={{
+              background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: 14, padding: 4, display: 'flex', gap: 4,
+            }}>
+              {[{ role: 'patient', label: '🧑 Patient' }, { role: 'doctor', label: '👨‍⚕️ Doctor' }].map(({ role, label }) => (
+                <button key={role} onClick={() => setUserRole(role)} style={{
+                  flex: 1, padding: '9px 8px', borderRadius: 11, border: 'none',
+                  background: userRole === role ? 'linear-gradient(135deg,#3B82F6,#8B5CF6)' : 'transparent',
+                  color: userRole === role ? '#fff' : 'var(--text-muted)',
+                  fontWeight: 700, fontSize: 13, cursor: 'pointer', transition: 'all 0.2s',
+                }}>{label}</button>
+              ))}
+            </div>
+
+            {/* Signup-only fields */}
             {mode === 'signup' && (
               <>
-                <div style={{ display: 'flex', gap: 12 }}>
-                  <div className="input-group" style={{ flex: 1 }}>
-                    <label className="input-label">First Name</label>
-                    <input className="input" type="text" placeholder="Enter first name" value={firstName} onChange={e => setFirstName(e.target.value)} />
-                  </div>
-                  <div className="input-group" style={{ flex: 1 }}>
-                    <label className="input-label">Last Name</label>
-                    <input className="input" type="text" placeholder="Enter last name" value={lastName} onChange={e => setLastName(e.target.value)} />
-                  </div>
+                <div style={{ display: 'flex', gap: 10 }}>
+                  {[
+                    { label: 'First Name', val: firstName, set: setFirstName, ph: 'Rajan' },
+                    { label: 'Last Name', val: lastName, set: setLastName, ph: 'Sharma' },
+                  ].map(({ label, val, set, ph }) => (
+                    <div key={label} style={{ flex: 1 }}>
+                      <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.5, display: 'block', marginBottom: 6 }}>{label}</label>
+                      <input className="input" type="text" placeholder={ph} value={val} onChange={e => set(e.target.value)} style={{ borderRadius: 12 }} />
+                    </div>
+                  ))}
                 </div>
-                <div className="input-group">
-                  <label className="input-label">Contact Number</label>
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.5, display: 'block', marginBottom: 6 }}>Phone Number</label>
                   <div style={{ display: 'flex', gap: 8 }}>
-                    <div className="input" style={{ width: 60, textAlign: 'center', background: 'var(--bg-secondary)' }}>{DEFAULT_COUNTRY_CODE}</div>
-                    <input className="input" type="tel" maxLength={DEFAULT_PHONE_DIGITS} placeholder="9876543210" value={contactNumber} onChange={e => setContactNumber(e.target.value.replace(/\D/g, ''))} />
+                    <div className="input" style={{ width: 56, textAlign: 'center', background: 'rgba(255,255,255,0.06)', borderRadius: 12, flexShrink: 0 }}>{DEFAULT_COUNTRY_CODE}</div>
+                    <input className="input" type="tel" maxLength={DEFAULT_PHONE_DIGITS} placeholder="9876543210" value={contactNumber} onChange={e => setContactNumber(e.target.value.replace(/\D/g, ''))} style={{ borderRadius: 12 }} />
                   </div>
                 </div>
                 {userRole === 'doctor' && (
                   <>
-                    <div className="input-group">
-                      <label className="input-label">Specialization</label>
-                      <input className="input" type="text" placeholder="e.g. Cardiologist, Diabetologist" value={specialization} onChange={e => setSpecialization(e.target.value)} />
+                    <div>
+                      <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.5, display: 'block', marginBottom: 6 }}>Specialization</label>
+                      <input className="input" type="text" placeholder="e.g. Cardiologist" value={specialization} onChange={e => setSpecialization(e.target.value)} style={{ borderRadius: 12 }} />
                     </div>
-                    <div className="input-group">
-                      <label className="input-label">Hospital / Clinic Name</label>
-                      <input className="input" type="text" placeholder="e.g. City Care Hospital" value={hospitalName} onChange={e => setHospitalName(e.target.value)} />
+                    <div>
+                      <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.5, display: 'block', marginBottom: 6 }}>Hospital / Clinic</label>
+                      <input className="input" type="text" placeholder="e.g. Apollo Hospitals" value={hospitalName} onChange={e => setHospitalName(e.target.value)} style={{ borderRadius: 12 }} />
                     </div>
                   </>
                 )}
               </>
             )}
-            <div className="input-group">
-              <label className="input-label">{mode === 'signup' ? 'Mail ID' : 'Email Address'}</label>
-              <input className="input" type="email" placeholder="name@example.com" value={email} onChange={e => setEmail(e.target.value)} />
+
+            {/* Email */}
+            <div>
+              <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.5, display: 'block', marginBottom: 6 }}>Email Address</label>
+              <input className="input" type="email" placeholder="name@example.com" value={email} onChange={e => setEmail(e.target.value)} style={{ borderRadius: 12 }} />
             </div>
-            <div className="input-group">
-              <label className="input-label">Password</label>
+
+            {/* Password */}
+            <div>
+              <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.5, display: 'block', marginBottom: 6 }}>Password</label>
               <div style={{ position: 'relative' }}>
-                <input className="input" type={showPassword ? 'text' : 'password'} placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} />
-                <button onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
+                <input className="input" type={showPassword ? 'text' : 'password'} placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} style={{ borderRadius: 12 }} />
+                <button onClick={() => setShowPassword(!showPassword)} style={{
+                  position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)',
+                  background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 0,
+                }}>
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
             </div>
-            <button className="btn btn-primary btn-full" style={{ marginTop: 8 }} onClick={() => handleEmailAction(mode === 'signup')} disabled={loading}>
-              {loading ? 'Processing...' : mode === 'signup' ? 'Sign Up' : 'Sign In'}
+
+            {/* Submit */}
+            <button
+              onClick={() => handleEmailAction(mode === 'signup')}
+              disabled={loading}
+              style={{
+                width: '100%', padding: '15px', borderRadius: 16, border: 'none', marginTop: 4,
+                background: loading ? 'rgba(255,255,255,0.1)' : 'linear-gradient(135deg,#3B82F6,#8B5CF6)',
+                color: '#fff', fontWeight: 800, fontSize: 16, cursor: loading ? 'not-allowed' : 'pointer',
+                boxShadow: loading ? 'none' : '0 6px 24px rgba(59,130,246,0.4)',
+                transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+              }}
+            >
+              {loading ? (
+                <><div style={{ width: 18, height: 18, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} /> Processing…</>
+              ) : mode === 'signup' ? '🚀 Create Account' : '🔐 Sign In Securely'}
             </button>
+
+            <p style={{ textAlign: 'center', fontSize: 13, color: 'var(--text-muted)' }}>
+              {mode === 'signup' ? 'Already have an account? ' : 'New here? '}
+              <button onClick={() => { setMode(mode === 'signup' ? 'email' : 'signup'); setError(''); setSuccess(''); }}
+                style={{ background: 'none', border: 'none', color: '#818CF8', fontWeight: 700, cursor: 'pointer', fontSize: 13, padding: 0 }}>
+                {mode === 'signup' ? 'Sign In' : 'Create Account'}
+              </button>
+            </p>
           </div>
         )}
 
+        {/* ════ EMAIL OTP MODE ════ */}
         {mode === 'emailOtp' && (
-          <div>
-            <button className="btn-back" onClick={() => { setMode('choice'); setError(''); setSuccess(''); setOtpEmailSent(false); setOtpEmailCode(''); }} style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'none', border: 'none', color: 'var(--text-muted)', marginBottom: 24, cursor: 'pointer' }}>
-              <ChevronLeft size={16} /> Back
-            </button>
-            <h3 style={{ marginBottom: 20 }}>Login with OTP</h3>
-            <div className="input-group">
-              <label className="input-label">Email Address</label>
-              <input className="input" type="email" placeholder="name@example.com" value={otpEmail} onChange={e => setOtpEmail(e.target.value)} />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div>
+              <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.5, display: 'block', marginBottom: 6 }}>Your Email</label>
+              <input className="input" type="email" placeholder="name@example.com" value={otpEmail} onChange={e => setOtpEmail(e.target.value)} style={{ borderRadius: 12 }} />
             </div>
-            <button className="btn btn-primary btn-full" style={{ marginTop: 8 }} onClick={handleEmailOtpSend} disabled={loading}>
-              {loading ? 'Sending OTP...' : 'Send OTP to Email'}
+            <button onClick={handleEmailOtpSend} disabled={loading} style={{
+              width: '100%', padding: '15px', borderRadius: 16, border: 'none',
+              background: 'linear-gradient(135deg,#3B82F6,#8B5CF6)',
+              color: '#fff', fontWeight: 800, fontSize: 15, cursor: 'pointer',
+              boxShadow: '0 6px 24px rgba(59,130,246,0.35)',
+            }}>
+              {loading ? 'Sending…' : '📧 Send OTP to Email'}
             </button>
             {otpEmailSent && (
               <>
-                <div className="input-group" style={{ marginTop: 14 }}>
-                  <label className="input-label">Enter OTP</label>
-                  <input
-                    className="input"
-                    type="tel"
-                    maxLength={6}
-                    placeholder="6-digit OTP"
-                    value={otpEmailCode}
-                    onChange={e => setOtpEmailCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                  />
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.5, display: 'block', marginBottom: 6 }}>Enter 6-digit OTP</label>
+                  <input className="input" type="tel" maxLength={6} placeholder="••••••" value={otpEmailCode}
+                    onChange={e => setOtpEmailCode(e.target.value.replace(/\D/g, '').slice(0, 6))} style={{ borderRadius: 12, fontSize: 22, letterSpacing: 8, textAlign: 'center' }} />
                 </div>
-                <button className="btn btn-primary btn-full" style={{ marginTop: 8 }} onClick={handleEmailOtpVerify} disabled={loading}>
-                  {loading ? 'Verifying...' : 'Verify OTP & Login'}
+                <button onClick={handleEmailOtpVerify} disabled={loading} style={{
+                  width: '100%', padding: '15px', borderRadius: 16, border: 'none',
+                  background: 'linear-gradient(135deg,#22C55E,#16A34A)',
+                  color: '#fff', fontWeight: 800, fontSize: 15, cursor: 'pointer',
+                  boxShadow: '0 6px 24px rgba(34,197,94,0.35)',
+                }}>
+                  {loading ? 'Verifying…' : '✅ Verify & Login'}
                 </button>
               </>
             )}
           </div>
         )}
 
+        {/* ════ PHONE MODE ════ */}
         {mode === 'phone' && (
-          <div>
-            <button className="btn-back" onClick={() => { setMode('choice'); setStep('input'); setError(''); setSuccess(''); }} style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'none', border: 'none', color: 'var(--text-muted)', marginBottom: 24, cursor: 'pointer' }}>
-              <ChevronLeft size={16} /> Back
-            </button>
-            <h3 style={{ marginBottom: 20 }}>Login with Phone</h3>
-
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             {step === 'input' ? (
               <>
-                <div className="input-group">
-                  <label className="input-label">Mobile Number</label>
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.5, display: 'block', marginBottom: 6 }}>Mobile Number</label>
                   <div style={{ display: 'flex', gap: 8 }}>
-                    <div className="input" style={{ width: 60, textAlign: 'center', background: 'var(--bg-secondary)' }}>{DEFAULT_COUNTRY_CODE}</div>
-                    <input className="input" type="tel" maxLength={DEFAULT_PHONE_DIGITS} placeholder="9876543210" value={phone} onChange={e => setPhone(e.target.value.replace(/\D/g, ''))} />
+                    <div className="input" style={{ width: 56, textAlign: 'center', background: 'rgba(255,255,255,0.06)', borderRadius: 12, flexShrink: 0 }}>{DEFAULT_COUNTRY_CODE}</div>
+                    <input className="input" type="tel" maxLength={DEFAULT_PHONE_DIGITS} placeholder="9876543210" value={phone} onChange={e => setPhone(e.target.value.replace(/\D/g, ''))} style={{ borderRadius: 12 }} />
                   </div>
                 </div>
-                <button className="btn btn-primary btn-full" style={{ marginTop: 8 }} onClick={handlePhoneSubmit} disabled={loading}>
-                  {loading ? 'Sending OTP...' : 'Send OTP'}
+                <button onClick={handlePhoneSubmit} disabled={loading} style={{
+                  width: '100%', padding: '15px', borderRadius: 16, border: 'none',
+                  background: 'linear-gradient(135deg,#3B82F6,#8B5CF6)',
+                  color: '#fff', fontWeight: 800, fontSize: 15, cursor: 'pointer',
+                  boxShadow: '0 6px 24px rgba(59,130,246,0.35)',
+                }}>
+                  {loading ? 'Sending…' : '📲 Send OTP'}
                 </button>
               </>
             ) : (
               <>
-                <p style={{ textAlign: 'center', color: 'var(--text-secondary)', marginBottom: 24 }}>Enter verification code sent to {DEFAULT_COUNTRY_CODE} {phone}</p>
-                <div className="otp-row" style={{ marginBottom: 24, justifyContent: 'center' }}>
+                <p style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: 14 }}>
+                  Code sent to <strong style={{ color: 'var(--text-primary)' }}>{DEFAULT_COUNTRY_CODE} {phone}</strong>
+                </p>
+                <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
                   {otp.map((d, i) => (
-                    <input key={i} ref={otpRefs[i]} className="otp-box" style={{ width: 44, height: 50, fontSize: 20 }} type="tel" maxLength={1} value={d}
+                    <input
+                      key={i} ref={otpRefs[i]}
+                      type="tel" maxLength={1} value={d}
                       onChange={e => handleOtpChange(e.target.value, i)}
-                      onKeyDown={e => e.key === 'Backspace' && !otp[i] && i > 0 && otpRefs[i - 1].current.focus()} />
+                      onKeyDown={e => e.key === 'Backspace' && !otp[i] && i > 0 && otpRefs[i - 1].current.focus()}
+                      style={{
+                        width: 44, height: 54, borderRadius: 14, border: '2px solid rgba(59,130,246,0.35)',
+                        background: 'rgba(59,130,246,0.08)', color: 'var(--text-primary)',
+                        fontSize: 22, fontWeight: 800, textAlign: 'center', outline: 'none',
+                        transition: 'border-color 0.2s',
+                      }}
+                    />
                   ))}
                 </div>
-                <button className="btn btn-primary btn-full" onClick={verifyOtp} disabled={loading}>
-                  {loading ? 'Verifying...' : 'Verify & Continue'}
+                <button onClick={verifyOtp} disabled={loading} style={{
+                  width: '100%', padding: '15px', borderRadius: 16, border: 'none',
+                  background: 'linear-gradient(135deg,#22C55E,#16A34A)',
+                  color: '#fff', fontWeight: 800, fontSize: 15, cursor: 'pointer',
+                  boxShadow: '0 6px 24px rgba(34,197,94,0.35)',
+                }}>
+                  {loading ? 'Verifying…' : '✅ Verify & Continue'}
                 </button>
-                <button className="btn btn-ghost btn-full" style={{ marginTop: 12 }} onClick={() => setStep('input')}>Change Number</button>
+                <button onClick={() => setStep('input')} style={{
+                  background: 'none', border: 'none', color: 'var(--text-muted)',
+                  fontSize: 13, cursor: 'pointer', textDecoration: 'underline',
+                }}>
+                  Change number
+                </button>
               </>
             )}
           </div>
         )}
       </div>
 
-      <p style={{ textAlign: 'center', fontSize: 13, color: 'var(--text-muted)', marginTop: 40 }}>
-        Protected by Firebase. <span style={{ color: 'var(--blue)' }}>Privacy Policy</span>
+      {/* ── Footer ── */}
+      <p style={{ textAlign: 'center', fontSize: 12, color: 'var(--text-muted)', padding: '0 24px 28px', position: 'relative', zIndex: 1 }}>
+        🔒 Secured by Firebase Auth &nbsp;·&nbsp;
+        <span style={{ color: 'var(--blue)', cursor: 'pointer' }}>Privacy Policy</span>
       </p>
+
+      {/* ── Keyframe styles ── */}
+      <style>{`
+        @keyframes float {
+          0%,100% { transform: translateY(0px); }
+          50%      { transform: translateY(-8px); }
+        }
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 }
+
