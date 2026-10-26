@@ -1,8 +1,8 @@
 {
   "scripts": {
-    "dev": "cd client && npm run dev",
-    "build": "cd client && npm install && npm run build",
-    "preview": "cd client && npm run preview",
+    "dev": "npm run dev --prefix client",
+    "build": "npm install --prefix client && npm run build --prefix client",
+    "preview": "npm run preview --prefix client",
     "start": "node server/index.js"
   },
   "dependencies": {
