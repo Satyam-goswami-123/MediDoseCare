@@ -2,12 +2,19 @@
 
 A full-stack healthcare platform for senior citizens — smart medicine reminders, health monitoring, prescription management, and emergency SOS.
 
+## 🌐 Live Demo
+
+**[https://medi-dose-care.vercel.app/](https://medi-dose-care.vercel.app/)**
+
+> Best viewed on mobile — open the link on your phone or use Chrome DevTools → iPhone 14 Pro device frame.
+
 ## Tech Stack
 | Layer | Technology |
 |-------|-----------|
 | Frontend | React 18 + Vite |
 | Backend | Node.js + Express |
 | Database | MySQL 8 |
+| Hosting | Vercel (frontend) |
 
 ## Project Structure
 ```
@@ -16,7 +23,7 @@ MediDoseCare/
 └── server/   — Node.js + Express API
 ```
 
-## Quick Start
+## Quick Start (Local Development)
 
 ### 1. Database Setup
 ```sql
@@ -61,7 +68,8 @@ npm run dev            # Runs on http://localhost:5173
 ```
 
 ### 4. Open App
-Open http://localhost:5173 in Chrome DevTools > iPhone 14 Pro device frame
+- **Production:** [https://medi-dose-care.vercel.app/](https://medi-dose-care.vercel.app/)
+- **Local:** Open `http://localhost:5173` in Chrome DevTools → iPhone 14 Pro device frame
 
 ## API Endpoints
 | Method | Endpoint | Description |
